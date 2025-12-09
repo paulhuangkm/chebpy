@@ -1,3 +1,4 @@
+
 #!/bin/sh
 # Sync configuration files from template repository
 # - Reads configuration from .github/template.yml

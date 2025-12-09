@@ -1,3 +1,4 @@
+
 ## Makefile for tschm/.config-templates
 # (https://github.com/tschm/.config-templates)
 #
@@ -95,11 +96,11 @@ clean: ## clean
 	  | xargs -r git branch -D 2>/dev/null || true
 
 ##@ Development and Testing
-test: install ## run all tests
+test: install ## run all tests (skips slow tests exceeding 1s timeout)
 	@if [ -d ${SOURCE_FOLDER} ] && [ -d ${TESTS_FOLDER} ]; then \
 	  mkdir -p _tests/html-coverage _tests/html-report; \
-	  ${UV_BIN} pip install pytest pytest-cov pytest-html; \
-	  ${UV_BIN} run pytest ${TESTS_FOLDER} --cov=${SOURCE_FOLDER} --cov-report=term --cov-report=html:_tests/html-coverage --html=_tests/html-report/report.html; \
+	  ${UV_BIN} pip install pytest pytest-cov pytest-html pytest-timeout; \
+	  ${UV_BIN} run pytest ${TESTS_FOLDER} -n auto -m "not slow" --cov=${SOURCE_FOLDER} --cov-report=term --cov-report=html:_tests/html-coverage --html=_tests/html-report/report.html; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} or tests folder ${TESTS_FOLDER} not found, skipping tests${RESET}\n"; \
 	fi
@@ -245,5 +246,10 @@ custom-%: ## run a custom script (usage: make custom-scriptname)
 		exit 1; \
 	fi
 
-print-% :
-	@echo $* = $($*)
+print-% : ## print the value of a variable (usage: make print-VARIABLE)
+	@printf "${BLUE}[INFO] Printing value of variable '$*':${RESET}\n"
+	@printf "${BOLD}Value of $*:${RESET}\n"
+	@printf "${GREEN}"
+	@printf "%s\n" "$($*)"
+	@printf "${RESET}"
+	@printf "${BLUE}[INFO] End of value for '$*'${RESET}\n"

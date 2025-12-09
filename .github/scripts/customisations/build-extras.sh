@@ -1,3 +1,4 @@
+
 #!/bin/bash
 # This file is part of the tschm/.config-templates repository
 # (https://github.com/tschm/.config-templates).

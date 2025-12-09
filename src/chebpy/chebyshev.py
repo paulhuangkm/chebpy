@@ -12,7 +12,7 @@ import numpy as np
 import numpy.polynomial.chebyshev as cheb
 from matplotlib.axes import Axes
 
-from .algorithms import coeffs2vals2, standard_chop, vals2coeffs2
+from .algorithms import chebpts2, coeffs2vals2, standard_chop, vals2coeffs2
 from .settings import _preferences as prefs
 
 # Type aliases
@@ -417,8 +417,6 @@ def from_function(
     Returns:
         A new Chebyshev polynomial that approximates the given function.
     """
-    from .algorithms import chebpts2, vals2coeffs2
-
     domain_arr = np.array([-1, 1]) if domain is None else np.array(domain)
 
     # Create a wrapper function that maps points from [-1, 1] to the custom domain
@@ -469,6 +467,10 @@ def __adaptive(cls: type, fun: callable, hscale: float = 1, maxpow2: int = None)
         n = 2**k + 1
         points = cheb.chebpts2(n)
         values = fun(points)
+        # Handle scalar returns from constant functions like lambda x: 1.0
+        values = np.atleast_1d(values)
+        if values.size == 1:
+            values = np.broadcast_to(values, points.shape)
         coeffs = vals2coeffs2(values)
         eps = prefs.eps
         tol = eps * max(hscale, 1)  # scale (decrease) tolerance by hscale
@@ -477,6 +479,10 @@ def __adaptive(cls: type, fun: callable, hscale: float = 1, maxpow2: int = None)
             coeffs = coeffs[:chplen]
             break
         if k == maxpow2:
-            warnings.warn(f"The {cls.__name__} constructor did not converge: using {n} points")
+            warnings.warn(
+                f"The {cls.__name__} constructor did not converge: using {n} points. "
+                f"Function may be too oscillatory or have discontinuities. "
+                f"Tolerance: {tol:.2e}. Consider increasing prefs.maxpow2 if needed."
+            )
             break
     return coeffs
