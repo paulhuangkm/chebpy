@@ -6,6 +6,8 @@ In last-minute editing, we mixed up some text and figures in the paper. See figu
 
 2. **Figure 3**: The paper text describes the quantum harmonic oscillator ($-u'' + x^2 u = \lambda u$ with eigenvalues $\lambda_k = 2k+1$), but Figure 3 actually shows the simple Laplacian eigenvalue problem which we had planned to include earlier but then removed ($-u'' = \lambda u$ on $[0,\pi]$ with eigenvalues $n^2$). The correct figure for the harmonic oscillator on [-6,6] is `eig.png` in the figures folder.
 
+3. We made some slight edits to the MATLAB vs Chebfun comparison file after realizing a bug in our implementation, but the test results are more or less the same, and you can reproduce them with the figures/test_chebop_examples.py script. Note that there is a hardcoded value for your MATLAB path, so you may need to change that for it to work. I have included as well a sample output from running on my MacBook Pro (Apple M3 chip) in output.txt, so you can corroborate the results we shared. The main conclusion is that we find chebpy is overall significantly faster, but residual and bc errors vary. The final chebpy representation tends to be larger.
+
 You can also see the respective files for generating these figures with chebpy. Apologies for these mistakes.
 
 ---
