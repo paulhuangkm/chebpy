@@ -22,16 +22,16 @@ class TestGeneralizedEigenvalues:
         domain = Domain([0, np.pi])
 
         # L = -d^2/dx^2
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, np.pi])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
         L.rbc = 0
 
         # M = I (identity operator)
-        m0 = chebfun(lambda x: 1 + 0*x, [0, np.pi])
+        m0 = chebfun(lambda x: 1 + 0 * x, [0, np.pi])
         M = LinOp(coeffs=[m0], domain=domain, diff_order=0)
         M.lbc = 0
         M.rbc = 0
@@ -56,16 +56,16 @@ class TestGeneralizedEigenvalues:
         domain = Domain([0, 1])
 
         # L = -d^2/dx^2
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
         L.rbc = 0
 
         # M[u] = 2*u (constant weight c=2)
-        m0 = chebfun(lambda x: 2 + 0*x, [0, 1])
+        m0 = chebfun(lambda x: 2 + 0 * x, [0, 1])
         M = LinOp(coeffs=[m0], domain=domain, diff_order=0)
         M.lbc = 0
         M.rbc = 0
@@ -75,11 +75,11 @@ class TestGeneralizedEigenvalues:
         evals = np.sort(evals)
 
         # Expected: (n*π)^2 / 2 for n = 1, 2, 3, 4
-        expected = np.array([(n*np.pi)**2 / 2 for n in range(1, 5)])
+        expected = np.array([(n * np.pi) ** 2 / 2 for n in range(1, 5)])
 
         for i in range(4):
             rel_err = abs(evals[i] - expected[i]) / expected[i]
-            assert rel_err < 1e-3, f"Eigenvalue {i}: {evals[i]} vs {expected[i]}"
+            assert rel_err < 1e-10, f"Eigenvalue {i}: {evals[i]} vs {expected[i]}"
 
     def test_variable_weight_function(self):
         """Test -u'' = λ * x * u (Sturm-Liouville with variable weight).
@@ -89,9 +89,9 @@ class TestGeneralizedEigenvalues:
         domain = Domain([0, 1])
 
         # L = -d^2/dx^2
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -120,7 +120,7 @@ class TestGeneralizedEigenvalues:
         # Check orthogonality with respect to weight
         # <u, v>_weight = ∫ u(x) * v(x) * x dx
         for i in range(3):
-            for j in range(i+1, 3):
+            for j in range(i + 1, 3):
                 # Compute weighted inner product
                 product = (efuns[i] * efuns[j] * m0).sum()
                 assert abs(product) < 1e-10, f"Eigenfunctions {i} and {j} not orthogonal: product={product}"
@@ -141,28 +141,28 @@ class TestGeneralizedEigenvalues:
         domain = Domain([0, 1])
 
         # L = d^4/dx^4
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 0*x, [0, 1])
-        a3 = chebfun(lambda x: 0*x, [0, 1])
-        a4 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 0 * x, [0, 1])
+        a3 = chebfun(lambda x: 0 * x, [0, 1])
+        a4 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2, a3, a4], domain=domain, diff_order=4)
 
         # Simply supported BCs: u(0) = u''(0) = u(1) = u''(1) = 0
         # These BCs are attached to L (the main operator)
         L.bc = [
-            lambda u: u(np.array([0.0]))[0],           # u(0) = 0
-            lambda u: u.diff(2)(np.array([0.0]))[0],   # u''(0) = 0
-            lambda u: u(np.array([1.0]))[0],           # u(1) = 0
-            lambda u: u.diff(2)(np.array([1.0]))[0],   # u''(1) = 0
+            lambda u: u(np.array([0.0]))[0],  # u(0) = 0
+            lambda u: u.diff(2)(np.array([0.0]))[0],  # u''(0) = 0
+            lambda u: u(np.array([1.0]))[0],  # u(1) = 0
+            lambda u: u.diff(2)(np.array([1.0]))[0],  # u''(1) = 0
         ]
 
         # M = d^2/dx^2 (rotational inertia)
         # M does NOT get BCs - it will be projected into L's BC-satisfying subspace
-        m0 = chebfun(lambda x: 0*x, [0, 1])
-        m1 = chebfun(lambda x: 0*x, [0, 1])
-        m2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        m0 = chebfun(lambda x: 0 * x, [0, 1])
+        m1 = chebfun(lambda x: 0 * x, [0, 1])
+        m2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         M = LinOp(coeffs=[m0, m1, m2], domain=domain, diff_order=2)
         # No BCs on M - per Chebfun convention
@@ -178,7 +178,7 @@ class TestGeneralizedEigenvalues:
 
         assert len(evals) == 3
         # Expected: -(nπ)² for n = 1, 2, 3
-        expected = -np.array([(n*np.pi)**2 for n in range(1, 4)])
+        expected = -np.array([(n * np.pi) ** 2 for n in range(1, 4)])
 
         # Sort eigenvalues by magnitude for comparison
         idx_sorted = np.argsort(np.abs(evals))
@@ -186,7 +186,8 @@ class TestGeneralizedEigenvalues:
 
         for i in range(3):
             rel_err = abs(evals_sorted[i] - expected[i]) / abs(expected[i])
-            assert rel_err < 0.05, f"Eigenvalue {i}: {evals_sorted[i]} vs {expected[i]}, rel_err={rel_err}"
+            # 4th order problem with derivative mass matrix is more challenging
+            assert rel_err < 1e-9, f"Eigenvalue {i}: {evals_sorted[i]} vs {expected[i]}, rel_err={rel_err}"
 
         # Check eigenfunctions satisfy BCs
         for i, ef in enumerate(efuns):
@@ -195,8 +196,8 @@ class TestGeneralizedEigenvalues:
             bc_u2_0 = abs(ef.diff(2)(np.array([0.0]))[0])
             bc_u2_1 = abs(ef.diff(2)(np.array([1.0]))[0])
 
-            assert bc_u0 < 1e-10, f"Eigenfunction {i}: u(0) = {bc_u0}"
-            assert bc_u1 < 1e-10, f"Eigenfunction {i}: u(1) = {bc_u1}"
+            assert bc_u0 < 1e-9, f"Eigenfunction {i}: u(0) = {bc_u0}"
+            assert bc_u1 < 1e-9, f"Eigenfunction {i}: u(1) = {bc_u1}"
             # Note: Second derivative BCs have looser tolerance due to numerical differentiation
             # Using 3e-8 to account for improved but still approximate derivative evaluation at boundaries
             # With barycentric formula: typical errors are 1-2e-8, allow 3e-8 for safety
@@ -208,16 +209,16 @@ class TestGeneralizedEigenvalues:
         domain = Domain([0, np.pi])
 
         # L = -d^2/dx^2
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, np.pi])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = lambda u: u.diff()(np.array([0.0]))[0]  # Neumann
         L.rbc = 0  # Dirichlet
 
         # M[u] = u
-        m0 = chebfun(lambda x: 1 + 0*x, [0, np.pi])
+        m0 = chebfun(lambda x: 1 + 0 * x, [0, np.pi])
         M = LinOp(coeffs=[m0], domain=domain, diff_order=0)
         M.lbc = lambda u: u.diff()(np.array([0.0]))[0]
         M.rbc = 0
@@ -226,24 +227,24 @@ class TestGeneralizedEigenvalues:
         evals, efuns = L.eigs(k=3, mass_matrix=M)
 
         # Expected: ((n + 1/2))^2 for n = 0, 1, 2
-        expected = np.array([(n + 0.5)**2 for n in range(3)])
+        expected = np.array([(n + 0.5) ** 2 for n in range(3)])
 
         evals = np.sort(evals)
         for i in range(3):
             rel_err = abs(evals[i] - expected[i]) / expected[i]
-            assert rel_err < 1e-2, f"Eigenvalue {i}: {evals[i]} vs {expected[i]}"
+            assert rel_err < 1e-10, f"Eigenvalue {i}: {evals[i]} vs {expected[i]}"
 
 
 class TestGeneralizedEigenvaluesRegression:
     """Regression tests to ensure generalized eigenvalues work correctly."""
 
     def test_no_mass_matrix_unchanged(self):
-        """Verify that not providing mass_matrix gives same results as before."""
+        """Verify that eigenvalue problems work without mass_matrix parameter."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -256,9 +257,9 @@ class TestGeneralizedEigenvaluesRegression:
         assert len(efuns) == 3
 
         # Expected: (n*π)^2 for n = 1, 2, 3
-        expected = np.array([(n*np.pi)**2 for n in range(1, 4)])
+        expected = np.array([(n * np.pi) ** 2 for n in range(1, 4)])
         evals = np.sort(evals)
 
         for i in range(3):
             rel_err = abs(evals[i] - expected[i]) / expected[i]
-            assert rel_err < 1e-3
+            assert rel_err < 1e-10

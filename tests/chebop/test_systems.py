@@ -1,7 +1,6 @@
-"""Comprehensive tests for coupled ODE systems using Chebop.
+"""Tests for coupled ODE systems using Chebop.
 
-Test-driven development for Issue #11: System Solving.
-These tests define the expected API and behavior before implementation.
+These tests define the expected API and behavior for system solving.
 """
 
 import numpy as np
@@ -19,26 +18,35 @@ class TestSystemDetection:
         """Non-system operator should be detected as scalar."""
         N = chebop([0, 1])
         N.op = lambda u: u.diff(2) + u
+        N.lbc = 0
+        N.rbc = 0
 
-        # After analysis, should detect scalar (not system)
-        # This should work currently
-        assert N.op is not None
+        # Solve to verify it works as scalar
+        u = N.solve()
+        assert abs(u(0.0)) < 1e-10
+        assert abs(u(1.0)) < 1e-10
 
     def test_detect_system_operator_list(self):
         """System operator returning list should be detected."""
         N = chebop([0, 1])
         N.op = lambda u, v: [u.diff() - v, v.diff() + u]
+        N.lbc = lambda u, v: [u - 1, v]
 
-        # Should detect: 2 equations, 2 variables
-        # Implementation will add: N._is_system, N._num_equations, N._num_variables
-        assert N.op is not None
+        # Solve to verify system detection works
+        u, v = N.solve()
+        assert abs(u(0.0) - 1.0) < 1e-10
+        assert abs(v(0.0)) < 1e-10
 
     def test_detect_system_operator_tuple(self):
         """System operator returning tuple should be detected."""
         N = chebop([0, 1])
         N.op = lambda u, v: (u.diff() - v, v.diff() + u)
+        N.lbc = lambda u, v: [u - 1, v]
 
-        assert N.op is not None
+        # Solve to verify tuple format works
+        u, v = N.solve()
+        assert abs(u(0.0) - 1.0) < 1e-10
+        assert abs(v(0.0)) < 1e-10
 
     def test_system_dimension_mismatch(self):
         """System with mismatched dimensions should raise error."""
@@ -111,13 +119,13 @@ class TestSimpleSystems:
             _preferences.splitting = False
 
             N = chebop([0, 1])
-            N.op = lambda u, v: [u.diff() - 2*u - v, v.diff() - u - 2*v]
+            N.op = lambda u, v: [u.diff() - 2 * u - v, v.diff() - u - 2 * v]
             N.lbc = lambda u, v: [u - 1, v]
 
             u, v = N.solve()
 
             x_test = np.linspace(0, 1, 30)
-            e3x = np.exp(3*x_test)
+            e3x = np.exp(3 * x_test)
             ex = np.exp(x_test)
             expected_u = (e3x + ex) / 2
             expected_v = (e3x - ex) / 2
@@ -137,7 +145,7 @@ class TestSecondOrderSystems:
         with _preferences:
             _preferences.splitting = False
 
-            N = chebop([0, np.pi/2])
+            N = chebop([0, np.pi / 2])
             N.op = lambda u, v: [u.diff(2) + u - v, v.diff(2) - u + v]
             N.lbc = lambda u, v: [u - 1, u.diff(), v, v.diff() - 1]
 
@@ -174,13 +182,13 @@ class TestSecondOrderSystems:
             B = 0.5
             C = 0.5
             # Compute D from BCs
-            rhs1 = 0.5*np.cosh(1) - 0.5*np.cos(1)
-            rhs2 = np.sinh(1) - 0.5*np.cosh(1) + 0.5*np.cos(1)
-            D = (rhs1 - rhs2) / (2*np.sin(1))
+            rhs1 = 0.5 * np.cosh(1) - 0.5 * np.cos(1)
+            rhs2 = np.sinh(1) - 0.5 * np.cosh(1) + 0.5 * np.cos(1)
+            D = (rhs1 - rhs2) / (2 * np.sin(1))
 
             x_test = np.linspace(0, 1, 30)
-            expected_u = A*np.cosh(x_test) + B*np.sinh(x_test) + C*np.cos(x_test) + D*np.sin(x_test)
-            expected_v = A*np.cosh(x_test) + B*np.sinh(x_test) - C*np.cos(x_test) - D*np.sin(x_test)
+            expected_u = A * np.cosh(x_test) + B * np.sinh(x_test) + C * np.cos(x_test) + D * np.sin(x_test)
+            expected_v = A * np.cosh(x_test) + B * np.sinh(x_test) - C * np.cos(x_test) - D * np.sin(x_test)
 
             assert np.max(np.abs(u(x_test) - expected_u)) < 1e-8
             assert np.max(np.abs(v(x_test) - expected_v)) < 1e-8
@@ -294,15 +302,15 @@ class TestThreeVariableSystems:
             _preferences.splitting = False
 
             N = chebop([0, 1])
-            N.op = lambda u, v, w: [u.diff() - u, v.diff() - 2*v, w.diff() - 3*w]
+            N.op = lambda u, v, w: [u.diff() - u, v.diff() - 2 * v, w.diff() - 3 * w]
             N.lbc = lambda u, v, w: [u - 1, v - 1, w - 1]
 
             u, v, w = N.solve()
 
             x_test = np.linspace(0, 1, 20)
             expected_u = np.exp(x_test)
-            expected_v = np.exp(2*x_test)
-            expected_w = np.exp(3*x_test)
+            expected_v = np.exp(2 * x_test)
+            expected_w = np.exp(3 * x_test)
 
             assert np.max(np.abs(u(x_test) - expected_u)) < 1e-10
             assert np.max(np.abs(v(x_test) - expected_v)) < 1e-10
@@ -333,7 +341,7 @@ class TestSystemsWithRHS:
         with _preferences:
             _preferences.splitting = False
 
-            N = chebop([0, 2*np.pi])
+            N = chebop([0, 2 * np.pi])
             # u' = v, v' = -u + sin(x)
             N.op = lambda u, v: [u.diff() - v, v.diff() + u]
             N.lbc = lambda u, v: [u, v]
@@ -361,8 +369,11 @@ class TestEdgeCases:
 
             u = N.solve()
 
-            assert u is not None
-            assert not isinstance(u, (list, tuple))  # Should return single Chebfun
+            # Should return single Chebfun, not tuple
+            assert not isinstance(u, (list, tuple))
+            # Should satisfy BCs
+            assert abs(u(0.0) - 1.0) < 1e-10
+            assert abs(u(1.0)) < 1e-10
 
     def test_zero_interval(self):
         """Test system on degenerate interval should raise error."""
@@ -413,7 +424,7 @@ class TestEdgeCases:
 
         NOTE: Current implementation solves on full domain [0, 1] without
         explicit continuity constraints at interior breakpoints. This matches
-        MATLAB Chebfun behavior. True piecewise system support would require
+        reference behavior. True piecewise system support would require
         solving separately on each interval with continuity constraints.
         """
         with _preferences:
@@ -441,11 +452,9 @@ class TestEdgeCases:
             v_cont = v(x_cont)
 
             # Relaxed tolerance - interpolation error from evaluating polynomial
-            # at nearby points, not true discontinuity. Matches MATLAB behavior.
-            assert abs(u_cont[1] - u_cont[0]) < 1e-3, \
-                f"u discontinuity {abs(u_cont[1] - u_cont[0]):.2e} exceeds 1e-3"
-            assert abs(v_cont[1] - v_cont[0]) < 1e-3, \
-                f"v discontinuity {abs(v_cont[1] - v_cont[0]):.2e} exceeds 1e-3"
+            # at nearby points, not true discontinuity.
+            assert abs(u_cont[1] - u_cont[0]) < 1e-3, f"u discontinuity {abs(u_cont[1] - u_cont[0]):.2e} exceeds 1e-3"
+            assert abs(v_cont[1] - v_cont[0]) < 1e-3, f"v discontinuity {abs(v_cont[1] - v_cont[0]):.2e} exceeds 1e-3"
 
 
 class TestReturnFormat:
@@ -465,8 +474,8 @@ class TestReturnFormat:
             assert isinstance(result, (tuple, list))
             assert len(result) == 2
             u, v = result
-            assert hasattr(u, 'diff')  # Should be Chebfun
-            assert hasattr(v, 'diff')  # Should be Chebfun
+            assert hasattr(u, "diff")  # Should be Chebfun
+            assert hasattr(v, "diff")  # Should be Chebfun
 
     def test_three_variable_returns_tuple(self):
         """Verify 3-variable system returns tuple of 3 Chebfuns."""
@@ -494,7 +503,7 @@ class TestNumericalAccuracy:
             # u' = -10u + 10v, v' = 10u - 10v
             # Eigenvalues: 0, -20 (stiff)
             N = chebop([0, 1])
-            N.op = lambda u, v: [u.diff() + 10*u - 10*v, v.diff() - 10*u + 10*v]
+            N.op = lambda u, v: [u.diff() + 10 * u - 10 * v, v.diff() - 10 * u + 10 * v]
             N.lbc = lambda u, v: [u - 1, v]
 
             u, v = N.solve()
@@ -515,7 +524,7 @@ class TestNumericalAccuracy:
 
             omega = 20.0
             N = chebop([0, 1])
-            N.op = lambda u, v: [u.diff() - omega*v, v.diff() + omega*u]
+            N.op = lambda u, v: [u.diff() - omega * v, v.diff() + omega * u]
             N.lbc = lambda u, v: [u - 1, v]
 
             u, v = N.solve()
@@ -532,13 +541,13 @@ class TestNumericalAccuracy:
             assert error_v < 1e-9, f"v error {error_v:.2e} exceeds 1e-9"
 
 
-class TestMATLABComparison:
-    """Tests based on MATLAB Chebfun examples."""
+class TestReferenceComparison:
+    """Tests based on reference examples."""
 
-    def test_matlab_example_coupled_system(self):
-        """From MATLAB: u'' = v, v'' = u on [0,1].
+    def test_reference_example_coupled_system(self):
+        """Reference example: u'' = v, v'' = u on [0,1].
 
-        This is from test_system3.m in MATLAB Chebfun.
+        This is from a reference implementation.
 
         Analytical solution: u'''' = u, so u = A*cosh(x) + B*sinh(x) + C*cos(x) + D*sin(x)
         and v = u'' = A*cosh(x) + B*sinh(x) - C*cos(x) - D*sin(x).
@@ -557,13 +566,13 @@ class TestMATLABComparison:
             A = 0.5
             B = 0.5
             C = 0.5
-            rhs1 = 0.5*np.cosh(1) - 0.5*np.cos(1)
-            rhs2 = np.sinh(1) - 0.5*np.cosh(1) + 0.5*np.cos(1)
-            D = (rhs1 - rhs2) / (2*np.sin(1))
+            rhs1 = 0.5 * np.cosh(1) - 0.5 * np.cos(1)
+            rhs2 = np.sinh(1) - 0.5 * np.cosh(1) + 0.5 * np.cos(1)
+            D = (rhs1 - rhs2) / (2 * np.sin(1))
 
             x_test = np.linspace(0, 1, 50)
-            expected_u = A*np.cosh(x_test) + B*np.sinh(x_test) + C*np.cos(x_test) + D*np.sin(x_test)
-            expected_v = A*np.cosh(x_test) + B*np.sinh(x_test) - C*np.cos(x_test) - D*np.sin(x_test)
+            expected_u = A * np.cosh(x_test) + B * np.sinh(x_test) + C * np.cos(x_test) + D * np.sin(x_test)
+            expected_v = A * np.cosh(x_test) + B * np.sinh(x_test) - C * np.cos(x_test) - D * np.sin(x_test)
 
             assert np.max(np.abs(u(x_test) - expected_u)) < 1e-9
             assert np.max(np.abs(v(x_test) - expected_v)) < 1e-9

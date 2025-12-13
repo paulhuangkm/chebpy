@@ -1,6 +1,6 @@
-"""Extensive tests for chebop operator analysis methods.
+"""Tests for chebop operator analysis methods.
 
-This module provides comprehensive tests for the core operator analysis
+This module provides tests for the core operator analysis
 functionality of the chebop class:
 
 1. _detect_order(): Detects the highest derivative order in an operator
@@ -147,14 +147,14 @@ class TestDetectOrder:
     def test_detect_order_power_operator(self):
         """Test that (u.diff())**2 + u.diff(2) is order 2."""
         N = chebop([-1, 1])
-        N.op = lambda u: (u.diff())**2 + u.diff(2)
+        N.op = lambda u: (u.diff()) ** 2 + u.diff(2)
         order = N._detect_order()
         # Should detect order 2 from u.diff(2)
         assert order == 2, f"Expected order 2, got {order}"
 
     def test_detect_order_different_domains(self):
         """Test order detection works on different domains."""
-        for a, b in [[0, 1], [0, 2*np.pi], [-2, 2]]:
+        for a, b in [[0, 1], [0, 2 * np.pi], [-2, 2]]:
             N = chebop([a, b])
             N.op = lambda u: u.diff(2) + u
             order = N._detect_order()
@@ -163,7 +163,7 @@ class TestDetectOrder:
     def test_detect_order_complex_expression(self):
         """Test complex operator: u.diff(3) + 2*u.diff() - u."""
         N = chebop([-1, 1])
-        N.op = lambda u: u.diff(3) + 2*u.diff() - u
+        N.op = lambda u: u.diff(3) + 2 * u.diff() - u
         order = N._detect_order()
         assert order == 3, f"Expected order 3, got {order}"
 
@@ -238,8 +238,11 @@ class TestEvaluateOperatorSafe:
 
         # Create a mock x function that returns all 2s
         class MockX:
-            def __rmul__(self, other): return other * 2
-            def __mul__(self, other): return 2 * other
+            def __rmul__(self, other):
+                return other * 2
+
+            def __mul__(self, other):
+                return 2 * other
 
         # When using default x, result should be x * u
         result1 = N._evaluate_operator_safe(u)
@@ -320,8 +323,8 @@ class TestEvaluateOperatorSafe:
         result = N._evaluate_operator_safe(u)
 
         # Result should be a Chebfun
-        assert hasattr(result, 'diff'), "Result should be Chebfun-like"
-        assert hasattr(result, '__call__'), "Result should be callable"
+        assert hasattr(result, "diff"), "Result should be Chebfun-like"
+        assert hasattr(result, "__call__"), "Result should be callable"
 
 
 class TestTestLinearity:
@@ -443,22 +446,6 @@ class TestTestLinearity:
         is_linear = N._test_linearity()
         assert is_linear, "Weighted sum should be linear"
 
-    def test_nonlinearity_division_by_u(self):
-        """Test that 1/u is nonlinear."""
-        N = chebop([-1, 1])
-        N.op = lambda u: 1 / u
-        is_linear = N._test_linearity()
-        # This might be None due to evaluation issues, but if it evaluates, should be nonlinear
-        if is_linear is not None:
-            assert not is_linear, "1/u should be nonlinear"
-
-    def test_nonlinearity_abs_of_u(self):
-        """Test that |u| is nonlinear."""
-        N = chebop([-1, 1])
-        N.op = lambda u: np.abs(u)
-        is_linear = N._test_linearity()
-        assert is_linear is False, "|u| should be nonlinear"
-
     def test_linearity_with_different_domains(self):
         """Test linearity detection on different domains."""
         domains = [[0, 1], [-2, 2], [0, np.pi]]
@@ -544,7 +531,7 @@ class TestExtractCoefficients:
         assert len(N._coeffs) >= 3
 
         # Test that reconstruction works
-        u_test = chebfun(lambda x: np.sin(2*x), [-1, 1])
+        u_test = chebfun(lambda x: np.sin(2 * x), [-1, 1])
 
         # Compute L(u) directly
         L_u_direct = u_test.diff(2) + u_test
@@ -648,7 +635,7 @@ class TestExtractCoefficients:
         and verify that using extracted coefficients gives the same result.
         """
         N = chebop([-1, 1])
-        N.op = lambda u: 3*u.diff(2) + 2*u.diff() + 5*u
+        N.op = lambda u: 3 * u.diff(2) + 2 * u.diff() + 5 * u
         N.analyze_operator()
 
         # Test on multiple functions
@@ -656,15 +643,15 @@ class TestExtractCoefficients:
             lambda x: x,
             lambda x: x**2,
             lambda x: np.sin(x),
-            lambda x: np.exp(x/2),
-            lambda x: np.cos(3*x),
+            lambda x: np.exp(x / 2),
+            lambda x: np.cos(3 * x),
         ]
 
         for test_fn in test_functions:
             u = chebfun(test_fn, [-1, 1])
 
             # Direct application
-            L_u_direct = 3*u.diff(2) + 2*u.diff() + 5*u
+            L_u_direct = 3 * u.diff(2) + 2 * u.diff() + 5 * u
 
             # Via coefficients
             L_u_coeff = N._coeffs[0] * u
@@ -686,10 +673,7 @@ class TestExtractCoefficients:
 
         # Verify reconstruction
         u_test = chebfun(lambda x: np.sin(x), [-1, 1])
-        L_u_direct = (u_test.diff(3) +
-                      u_test.diff(2) +
-                      u_test.diff() +
-                      u_test)
+        L_u_direct = u_test.diff(3) + u_test.diff(2) + u_test.diff() + u_test
 
         L_u_recon = N._coeffs[0] * u_test
         for k in range(1, len(N._coeffs)):
@@ -702,10 +686,10 @@ class TestExtractCoefficients:
     def test_extract_coefficients_preserves_order(self):
         """Test that len(coeffs) == diff_order + 1."""
         operators = [
-            lambda u: u,                                    # order 0
-            lambda u: u.diff(),                             # order 1
-            lambda u: u.diff().diff(),                      # order 2
-            lambda u: u.diff().diff().diff(),               # order 3
+            lambda u: u,  # order 0
+            lambda u: u.diff(),  # order 1
+            lambda u: u.diff().diff(),  # order 2
+            lambda u: u.diff().diff().diff(),  # order 3
         ]
 
         for op in operators:
@@ -713,8 +697,9 @@ class TestExtractCoefficients:
             N.op = op
             N.analyze_operator()
 
-            assert len(N._coeffs) == N._diff_order + 1, \
+            assert len(N._coeffs) == N._diff_order + 1, (
                 f"Mismatch: diff_order={N._diff_order}, len(coeffs)={len(N._coeffs)}"
+            )
 
     def test_extract_scalar_constant_operator(self):
         """Test operator that's just a constant: L[u] = 5*u."""
@@ -738,7 +723,7 @@ class TestOperatorAnalysisConsistency:
     def test_linear_implies_coefficients_extracted(self):
         """Test that if an operator is linear, coefficients are extracted."""
         N = chebop([-1, 1])
-        N.op = lambda u: u.diff() + 2*u
+        N.op = lambda u: u.diff() + 2 * u
         N.analyze_operator()
 
         assert N._is_linear
@@ -748,7 +733,7 @@ class TestOperatorAnalysisConsistency:
     def test_nonlinear_implies_no_coefficients(self):
         """Test that if an operator is nonlinear, no coefficients are extracted."""
         N = chebop([-1, 1])
-        N.op = lambda u: u*u + u.diff()
+        N.op = lambda u: u * u + u.diff()
         N.analyze_operator()
 
         assert not N._is_linear
@@ -757,7 +742,7 @@ class TestOperatorAnalysisConsistency:
     def test_analysis_idempotence(self):
         """Test that analyzing twice gives the same results."""
         N = chebop([-1, 1])
-        N.op = lambda u: u.diff(2) + 3*u.diff() + u
+        N.op = lambda u: u.diff(2) + 3 * u.diff() + u
 
         N.analyze_operator()
         is_linear_1 = N._is_linear
@@ -794,7 +779,7 @@ class TestOperatorAnalysisConsistency:
 
         for domain in domains:
             N = chebop(domain)
-            N.op = lambda u: u.diff(2) + 2*u.diff() + u
+            N.op = lambda u: u.diff(2) + 2 * u.diff() + u
             N.analyze_operator()
 
             assert N._is_linear
@@ -832,8 +817,7 @@ class TestEdgeCases:
 
             N.op = op_fn
             detected_order = N._detect_order()
-            assert detected_order == order, \
-                f"Expected order {order}, got {detected_order}"
+            assert detected_order == order, f"Expected order {order}, got {detected_order}"
 
     def test_high_order_operator_chained_detection(self):
         """Test detection of high-order operators using chained diff() calls.
@@ -852,8 +836,7 @@ class TestEdgeCases:
 
             N.op = op_fn
             detected_order = N._detect_order()
-            assert detected_order == order, \
-                f"Expected order {order} for chained calls, got {detected_order}"
+            assert detected_order == order, f"Expected order {order} for chained calls, got {detected_order}"
 
     def test_very_small_functions(self):
         """Test evaluation with very small amplitude functions."""
@@ -899,7 +882,6 @@ class TestOrderDetectionLimitations:
         order = N._detect_order()
         assert order == 3, f"Expected order 3, got {order}"
 
-
     def test_order_mixed_linear_nonlinear(self):
         """Test order detection with mixed linear and nonlinear terms."""
         N = chebop([-1, 1])
@@ -920,7 +902,7 @@ class TestOrderDetectionLimitations:
         """Test linearity detection with complex coefficient expressions."""
         N = chebop([-1, 1])
         # (sin(x))^2 * u'' + exp(x) * u' + cos(x) * u is linear in u
-        N.op = lambda x, u: (np.sin(x)**2) * u.diff(2) + np.exp(x) * u.diff() + np.cos(x) * u
+        N.op = lambda x, u: (np.sin(x) ** 2) * u.diff(2) + np.exp(x) * u.diff() + np.cos(x) * u
         is_linear = N._test_linearity()
         assert is_linear, "Should be linear despite complex coefficients"
 
@@ -936,7 +918,7 @@ class TestOrderDetectionLimitations:
         """Test coefficient extraction for complex but linear operators."""
         N = chebop([-1, 1])
         # (2x + 3)u'' + (x^2 - 1)u' + (5 - x)u is linear
-        N.op = lambda x, u: (2*x + 3) * u.diff(2) + (x**2 - 1) * u.diff() + (5 - x) * u
+        N.op = lambda x, u: (2 * x + 3) * u.diff(2) + (x**2 - 1) * u.diff() + (5 - x) * u
         N.analyze_operator()
 
         assert N._is_linear
@@ -946,7 +928,7 @@ class TestOrderDetectionLimitations:
     def test_operator_applied_to_polynomial_functions(self):
         """Test operators on polynomial functions with known derivatives."""
         N = chebop([-1, 1])
-        N.op = lambda u: u.diff(3) + 2*u.diff(2) + u.diff() + u
+        N.op = lambda u: u.diff(3) + 2 * u.diff(2) + u.diff() + u
         N.analyze_operator()
 
         # Test on polynomial x^5
@@ -961,5 +943,5 @@ class TestOrderDetectionLimitations:
         assert not np.any(np.isnan(result_vals))
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

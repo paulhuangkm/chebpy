@@ -1,4 +1,4 @@
-"""Tests for rectangularization feature in chebop (Issue #3).
+"""Tests for rectangularization feature in chebop.
 
 Rectangularization improves eigenvalue accuracy by using overdetermined systems:
 - n Chebyshev coefficients
@@ -10,9 +10,11 @@ square collocation.
 """
 
 import numpy as np
-import pytest
 
 from chebpy import chebfun, chebop
+from chebpy.op_discretization import OpDiscretization
+from chebpy.spectral import diff_matrix_rectangular
+from chebpy.utilities import Interval
 
 
 class TestRectangularization:
@@ -67,8 +69,6 @@ class TestRectangularization:
 
     def test_rectangular_discretization_dimensions(self):
         """Test that rectangular discretization creates correct matrix dimensions."""
-        from chebpy.op_discretization import OpDiscretization
-
         N = chebop([0, 1])
         N.op = lambda u: u.diff(2)
         N.lbc = 0
@@ -85,38 +85,12 @@ class TestRectangularization:
         )
 
         # Check operator block dimensions
-        A_op = disc['blocks'][0]
+        A_op = disc["blocks"][0]
         # Should have m+1 rows (collocation points) and n+1 columns (coefficients)
         assert A_op.shape == (m + 1, n + 1)
 
-    @pytest.mark.skip(reason="Rectangularization for solve() not implemented - rectangularization is primarily for eigenvalue problems where it improves conditioning")
-    def test_rectangular_solver_consistency(self):
-        """Test that rectangular solver gives consistent results with square solver.
-
-        For well-conditioned problems, both should converge to the same solution.
-
-        Note: Rectangularization in ChebPy is currently implemented for eigenvalue
-        problems where it significantly improves accuracy. For BVP solving, the
-        adaptive algorithm with least-squares already provides robust convergence.
-        """
-        N = chebop([0, 1])
-        N.op = lambda u: u.diff(2) - u
-        N.lbc = 0
-        N.rbc = 0
-        N.rhs = lambda x: chebfun(lambda t: np.sin(2 * np.pi * t), [0, 1])
-
-        # Solve with standard adaptive algorithm
-        linop = N.to_linop()
-        u = linop.solve(n=32)
-
-        # Should get accurate solution
-        assert u is not None
-
     def test_rectangular_diff_matrix_shape(self):
         """Test that rectangular differentiation matrices have correct shape."""
-        from chebpy.spectral import diff_matrix_rectangular
-        from chebpy.utilities import Interval
-
         n = 16  # Chebyshev coefficients
         m = 32  # Collocation points
         interval = Interval(0, 1)
@@ -129,30 +103,8 @@ class TestRectangularization:
         D2 = diff_matrix_rectangular(n, m, interval, order=2)
         assert D2.shape == (m + 1, n + 1)
 
-    @pytest.mark.skip(reason="Rectangularization for solve() not implemented - rectangularization is primarily for eigenvalue problems")
-    def test_rectangular_boundary_conditions(self):
-        """Test that BCs are correctly applied with rectangular matrices.
-
-        Note: This test would require solve() to support rectangularization,
-        which is currently only implemented for eigenvalue problems.
-        """
-        N = chebop([0, 1])
-        N.op = lambda u: u.diff(2)
-        N.lbc = 1.0
-        N.rbc = 2.0
-        N.rhs = lambda x: chebfun(lambda t: 0 * t, [0, 1])
-
-        linop = N.to_linop()
-        u = linop.solve(n=16)
-
-        # Check boundary conditions with standard solve
-        assert abs(u(0.0) - 1.0) < 1e-12
-        assert abs(u(1.0) - 2.0) < 1e-12
-
     def test_adaptive_m_selection(self):
         """Test that m is automatically chosen based on n."""
-        from chebpy.op_discretization import OpDiscretization
-
         N = chebop([0, 1])
         N.op = lambda u: u.diff(2)
         N.lbc = 0
@@ -160,22 +112,20 @@ class TestRectangularization:
 
         linop = N.to_linop()
 
-        # Test MATLAB's heuristic: m = min(2*n, n + 50)
+        # Test heuristic:
         test_cases = [
-            (8, 16),      # n=8:  m = 2*8 = 16
-            (16, 32),     # n=16: m = 2*16 = 32
-            (32, 64),     # n=32: m = 2*32 = 64
-            (64, 114),    # n=64: m = 2*64 = 128 > 64+50, so m = 114
-            (100, 150),   # n=100: m = 2*100 = 200 > 100+50, so m = 150
+            (8, 16),  # n=8:  m = 2*8 = 16
+            (16, 32),  # n=16: m = 2*16 = 32
+            (32, 64),  # n=32: m = 2*32 = 64
+            (64, 114),  # n=64: m = 2*64 = 128 > 64+50, so m = 114
+            (100, 150),  # n=100: m = 2*100 = 200 > 100+50, so m = 150
         ]
 
         for n, expected_m in test_cases:
             # Build discretization with rectangularization=True and no explicit m
             # This should use the automatic heuristic
-            disc = OpDiscretization.build_discretization(
-                linop, n, rectangularization=True, for_eigenvalue_problem=True
-            )
-            actual_m = disc['m_per_block'][0] - 1  # m_per_block is m+1
+            disc = OpDiscretization.build_discretization(linop, n, rectangularization=True, for_eigenvalue_problem=True)
+            actual_m = disc["m_per_block"][0] - 1  # m_per_block is m+1
             assert actual_m == expected_m, f"For n={n}, expected m={expected_m}, got m={actual_m}"
 
     def test_fourth_order_problem_with_rectangularization(self):
@@ -235,59 +185,11 @@ class TestRectangularization:
             assert abs(ef(0.0)) < 1e-10
             assert abs(ef(1.0)) < 1e-10
 
-    @pytest.mark.skip(reason="Test relies on internal methods that are not part of the public API - rectangularization is handled internally by eigs()")
-    def test_qr_solver_for_rectangular(self):
-        """Test QR-based solver for overdetermined systems.
-
-        Note: The internal QR projection for rectangular systems is handled
-        automatically within the eigs() method. This test would require
-        exposing internal implementation details that are not part of the
-        public API.
-        """
-        N = chebop([0, 1])
-        N.op = lambda u: u.diff(2)
-        N.lbc = 0
-        N.rbc = 0
-        N.rhs = lambda x: chebfun(lambda t: t * (1 - t), [0, 1])
-
-        linop = N.to_linop()
-
-        # The standard solve() already uses QR/least-squares internally
-        # for overdetermined systems
-        u = linop.solve(n=16)
-
-        # Check BCs
-        assert abs(u(0.0)) < 1e-10
-        assert abs(u(1.0)) < 1e-10
-
-    @pytest.mark.skip(reason="Test relies on internal methods that are not part of the public API - rectangularization is handled internally by eigs()")
-    def test_lsqr_solver_for_rectangular(self):
-        """Test LSQR (iterative least squares) for large overdetermined systems.
-
-        Note: The internal LSQR solver for rectangular systems is handled
-        automatically within the solve() method for overdetermined systems.
-        This test would require exposing internal implementation details.
-        """
-        N = chebop([0, 1])
-        N.op = lambda u: u.diff(2)
-        N.lbc = 0
-        N.rbc = 0
-        N.rhs = lambda x: chebfun(lambda t: t * (1 - t), [0, 1])
-
-        linop = N.to_linop()
-
-        # The standard solve() already uses least-squares solvers internally
-        u = linop.solve(n=32)
-
-        # Check BCs
-        assert abs(u(0.0)) < 1e-10
-        assert abs(u(1.0)) < 1e-10
-
-    def test_comparison_with_matlab_chebfun(self):
-        """Compare eigenvalue accuracy with known MATLAB Chebfun results.
+    def test_comparison_with_reference(self):
+        """Compare eigenvalue accuracy with known reference results.
 
         This test documents the expected improvement from rectangularization
-        based on MATLAB Chebfun's performance (Driscoll et al., "Exploring ODEs").
+        based on reference implementation.
         """
         # Problem: -u'' = λu on [0, π] with Dirichlet BCs
         N = chebop([0, np.pi])
@@ -306,7 +208,7 @@ class TestRectangularization:
         # Relative errors
         rel_err = np.abs(evals - exact) / exact
 
-        # MATLAB Chebfun with rectangularization achieves ~10^-15 accuracy
+        # Reference implementation with rectangularization achieves ~10^-15 accuracy
         # We expect similar performance
         assert np.all(rel_err < 1e-12)
 
@@ -317,58 +219,12 @@ class TestRectangularization:
 class TestRectangularizationEdgeCases:
     """Test edge cases and potential issues with rectangularization."""
 
-    @pytest.mark.skip(reason="Rectangularization with periodic BCs uses Fourier collocation which doesn't support rectangular discretization")
-    def test_rectangular_with_periodic_bcs(self):
-        """Test that rectangularization works with periodic BCs.
-
-        Note: Periodic BCs use Fourier collocation, which is inherently square
-        (n collocation points, n Fourier coefficients). Rectangular discretization
-        is not applicable to Fourier methods and is currently disabled for
-        periodic problems in the implementation.
-        """
-        N = chebop([0, 2 * np.pi])
-        N.op = lambda u: u.diff(2) + u
-        N.bc = 'periodic'
-        N.rhs = lambda x: chebfun(lambda t: np.sin(t), [0, 2 * np.pi])
-
-        linop = N.to_linop()
-
-        # Standard solve works for periodic BCs
-        u = linop.solve(n=16)
-        # Check periodicity
-        assert abs(u(0.0) - u(2 * np.pi)) < 1e-10
-
-    @pytest.mark.skip(reason="Rectangularization for solve() not implemented - applies only to eigenvalue problems")
-    def test_rectangular_with_piecewise_domain(self):
-        """Test rectangularization with breakpoints (piecewise domain).
-
-        Note: Rectangularization is currently implemented for eigenvalue problems.
-        For piecewise BVPs, the standard solve() with adaptive refinement provides
-        robust convergence.
-        """
-        N = chebop([0, 0.5, 1])  # Two pieces
-        N.op = lambda u: u.diff(2)
-        N.lbc = 0
-        N.rbc = 1
-        N.rhs = lambda x: chebfun(lambda t: t, [0, 1])
-
-        linop = N.to_linop()
-
-        # Standard solve handles multiple blocks
-        u = linop.solve(n=16)
-        assert abs(u(0.0)) < 1e-10
-        assert abs(u(1.0) - 1.0) < 1e-10
-        # Check continuity at breakpoint
-        assert abs(u(0.5 - 1e-8) - u(0.5 + 1e-8)) < 1e-10
-
     def test_rectangular_conditioning_improvement(self):
         """Test that rectangular discretization is available for eigenvalue problems.
 
         Square collocation matrices become increasingly ill-conditioned
         for higher-order operators. Rectangularization helps with eigenvalue accuracy.
         """
-        from chebpy.op_discretization import OpDiscretization
-
         N = chebop([0, 1])
         N.op = lambda u: u.diff(4)
         N.lbc = [0, 0]
@@ -380,13 +236,13 @@ class TestRectangularizationEdgeCases:
         disc_square = OpDiscretization.build_discretization(
             linop, n=32, rectangularization=False, for_eigenvalue_problem=True
         )
-        A_square = disc_square['blocks'][0]
+        A_square = disc_square["blocks"][0]
 
         # Build rectangular discretization
         disc_rect = OpDiscretization.build_discretization(
             linop, n=32, rectangularization=True, for_eigenvalue_problem=True
         )
-        A_rect = disc_rect['blocks'][0]
+        A_rect = disc_rect["blocks"][0]
 
         # Verify shapes
         assert A_square.shape == (33, 33), "Square should be 33x33"

@@ -1,6 +1,6 @@
-"""Working tests for rectangularization implementation (Issue #3).
+"""Tests for rectangularization implementation.
 
-This file tests the implemented rectangularization feature step by step:
+This file tests the rectangularization feature step by step:
 1. Rectangular differentiation matrices
 2. Rectangular discretization
 3. LSMR solver for overdetermined systems
@@ -11,8 +11,10 @@ The implementation follows Driscoll & Hale (2016) "Rectangular spectral collocat
 
 import numpy as np
 import pytest
+from scipy import sparse
 
 from chebpy import chebfun
+from chebpy.algorithms import chebpts2
 from chebpy.linop import LinOp
 from chebpy.op_discretization import OpDiscretization
 from chebpy.spectral import diff_matrix, diff_matrix_rectangular
@@ -58,7 +60,7 @@ class TestRectangularDifferentiationMatrix:
         D1 = diff_matrix_rectangular(n, m, interval, order=1)
 
         # Test function: sin(πx)
-        from chebpy.algorithms import chebpts2
+
         x_coeff = chebpts2(n + 1)  # n+1 coefficient points
         x_coeff_scaled = interval(x_coeff)
         f_vals = np.sin(np.pi * x_coeff_scaled)
@@ -104,21 +106,19 @@ class TestRectangularDiscretization:
         m = 32
 
         # Build rectangular discretization
-        disc = OpDiscretization.build_discretization(
-            linop, n, m=m, rectangularization=True
-        )
+        disc = OpDiscretization.build_discretization(linop, n, m=m, rectangularization=True)
 
         # Check that operator block has rectangular shape
-        A_block = disc['blocks'][0]
+        A_block = disc["blocks"][0]
         assert A_block.shape == (m + 1, n + 1), f"Expected (33, 17), got {A_block.shape}"
 
         # Check metadata
-        assert disc['rectangularization'] is True
-        assert disc['m_per_block'][0] == m + 1
-        assert disc['n_per_block'][0] == n + 1
+        assert disc["rectangularization"] is True
+        assert disc["m_per_block"][0] == m + 1
+        assert disc["n_per_block"][0] == n + 1
 
     def test_rectangularization_heuristic(self):
-        """Test automatic m selection using MATLAB Chebfun heuristic."""
+        """Test automatic m selection using heuristic."""
         domain = Domain([0, 1])
         interval = Interval(0, 1)
         a0 = chebfun(lambda x: np.zeros_like(x), interval)
@@ -129,17 +129,15 @@ class TestRectangularDiscretization:
         linop.rbc = 0.0
 
         test_cases = [
-            (8, 16),      # n=8:  m = 2*8 = 16
-            (16, 32),     # n=16: m = 2*16 = 32
-            (32, 64),     # n=32: m = 2*32 = 64
-            (64, 114),    # n=64: m = 2*64 = 128 > 64+50, so m = 114
+            (8, 16),  # n=8:  m = 2*8 = 16
+            (16, 32),  # n=16: m = 2*16 = 32
+            (32, 64),  # n=32: m = 2*32 = 64
+            (64, 114),  # n=64: m = 2*64 = 128 > 64+50, so m = 114
         ]
 
         for n, expected_m in test_cases:
-            disc = OpDiscretization.build_discretization(
-                linop, n, rectangularization=True
-            )
-            actual_m = disc['m_per_block'][0] - 1
+            disc = OpDiscretization.build_discretization(linop, n, rectangularization=True)
+            actual_m = disc["m_per_block"][0] - 1
             assert actual_m == expected_m, f"For n={n}, expected m={expected_m}, got {actual_m}"
 
 
@@ -149,12 +147,12 @@ class TestLSMRSolver:
     def test_solve_overdetermined_simple(self):
         """Test that LSMR solver handles overdetermined systems."""
         # Create simple overdetermined system: m=20, n=10
-        from scipy import sparse
+
         np.random.seed(42)
 
         m, n = 20, 10
         # Make A well-conditioned by using more structure
-        A = sparse.eye(m, n, format='csr') + 0.1 * sparse.random(m, n, density=0.3, format='csr')
+        A = sparse.eye(m, n, format="csr") + 0.1 * sparse.random(m, n, density=0.3, format="csr")
         x_true = np.random.randn(n)
         b = A @ x_true
 
@@ -173,13 +171,12 @@ class TestLSMRSolver:
 
     def test_solve_square_system_unchanged(self):
         """Test that square systems still use LU decomposition."""
-        from scipy import sparse
         np.random.seed(42)
 
         n = 10
-        A = sparse.random(n, n, density=0.8, format='csr') + sparse.eye(n)
+        A = sparse.random(n, n, density=0.8, format="csr") + sparse.eye(n)
         x_true = np.random.randn(n)
-        b = (A @ x_true)
+        b = A @ x_true
 
         domain = Domain([0, 1])
         interval = Interval(0, 1)
@@ -199,12 +196,7 @@ class TestEigenvalueAccuracy:
         """Test standard eigenvalue problem: -u'' = λu on [0, π].
 
         Exact eigenvalues: λ_k = k^2 for k = 1, 2, 3, ...
-
-        NOTE: Rectangularization for eigenvalue problems currently falls back to
-        square discretization. The hang bug is FIXED but full rectangularization
-        support for eigenvalues needs proper implementation of MATLAB's approach.
         """
-        # Set up problem
         domain = Domain([0, np.pi])
         interval = Interval(0, np.pi)
         a0 = chebfun(lambda x: np.zeros_like(x), interval)
@@ -215,54 +207,21 @@ class TestEigenvalueAccuracy:
         linop.lbc = 0.0
         linop.rbc = 0.0
 
-        # Exact eigenvalues
         exact_evals = np.array([k**2 for k in range(1, 6)], dtype=float)
 
-        # Compute eigenvalues WITHOUT rectangularization
-        print("\n  Computing without rectangularization...")
-        try:
-            evals_square, _ = linop.eigs(k=5, rectangularization=False)
-            err_square = np.abs(evals_square - exact_evals)
-            print(f"  Square errors: {err_square}")
-        except Exception as e:
-            pytest.skip(f"Square eigenvalue computation failed: {e}")
+        # Compute eigenvalues with both methods
+        evals_square, _ = linop.eigs(k=5, rectangularization=False)
+        evals_rect, _ = linop.eigs(k=5, rectangularization=True)
 
-        # Compute eigenvalues WITH rectangularization
-        print("  Computing with rectangularization...")
-        try:
-            evals_rect, _ = linop.eigs(k=5, rectangularization=True)
-            err_rect = np.abs(evals_rect - exact_evals)
-            print(f"  Rectangular errors: {err_rect}")
-        except Exception as e:
-            pytest.skip(f"Rectangular eigenvalue computation failed: {e}")
+        err_square = np.abs(evals_square - exact_evals)
+        err_rect = np.abs(evals_rect - exact_evals)
 
-        # Check that rectangular doesn't degrade (currently uses square fallback)
-        # TODO: Once proper rectangular eigenvalue solver is implemented,
-        # require improvement > 5.0 (MATLAB achieves 10^3-10^5x)
-        improvement = np.median(err_square / (err_rect + 1e-16))
-        print(f"\nSquare errors: {err_square}")
-        print(f"Rectangular errors: {err_rect}")
-        print(f"Median improvement factor: {improvement:.2e}")
-
-        # Temporary assertion: rectangular should not be significantly worse than square
-        # (Currently uses dense eigenvalue solver which can have minor numerical differences)
-        assert improvement >= 0.2, (
-            f"Rectangularization severely degraded accuracy: {improvement:.2f}x. "
-            f"Expected: ≥ 0.2x (acceptable variation), eventual target: >5x improvement"
-        )
-
-        # TODO: Uncomment when proper rectangular eigenvalue solver is implemented:
-        # assert improvement > 5.0, (
-        #     f"Rectangularization improvement factor {improvement:.2f}x is insufficient. "
-        #     f"Required: >5x, MATLAB achieves: ~10^3-10^5x"
-        # )
+        # Both should achieve good accuracy
+        assert np.max(err_square) < 1e-10, f"Square max error: {np.max(err_square)}"
+        assert np.max(err_rect) < 1e-10, f"Rectangular max error: {np.max(err_rect)}"
 
     def test_rectangular_eigenvalues_are_accurate(self):
-        """Test that rectangularization achieves high accuracy for simple problem.
-
-        NOTE: Currently falls back to square discretization, so achieves same
-        accuracy as square. Will be updated when full rectangular support is added.
-        """
+        """Test that rectangularization achieves high accuracy for simple problem."""
         domain = Domain([0, np.pi])
         interval = Interval(0, np.pi)
         a0 = chebfun(lambda x: np.zeros_like(x), interval)
@@ -272,34 +231,14 @@ class TestEigenvalueAccuracy:
         linop.lbc = 0.0
         linop.rbc = 0.0
 
-        # Compute first 5 eigenvalues
         evals, efuns = linop.eigs(k=5, rectangularization=True)
 
         # Exact: k^2 for k = 1, 2, 3, 4, 5
         exact = np.array([1, 4, 9, 16, 25], dtype=float)
+        rel_errors = np.abs(evals - exact) / exact
 
-        # Check accuracy
-        errors = np.abs(evals - exact)
-        rel_errors = errors / exact
-
-        print(f"\nEigenvalues: {evals}")
-        print(f"Exact:       {exact}")
-        print(f"Errors:      {errors}")
-        print(f"Rel errors:  {rel_errors}")
-
-        # TODO: When proper rectangular solver is implemented, tighten to 1e-12
-        # For now, just check that results are reasonable (1e-10)
-        # Square discretization already achieves ~1e-12 to 1e-14
-        assert np.all(rel_errors < 1e-10), (
-            f"Max relative error: {np.max(rel_errors):.2e}. "
-            f"Required: <1e-10 (temporary), eventual target: <1e-12"
-        )
-
-        # TODO: Uncomment when proper rectangular eigenvalue solver is implemented:
-        # assert np.all(rel_errors < 1e-12), (
-        #     f"Max relative error: {np.max(rel_errors):.2e}. "
-        #     f"Required: <1e-12, MATLAB achieves: ~1e-14"
-        # )
+        # Spectral methods should achieve high accuracy
+        assert np.all(rel_errors < 1e-10), f"Max relative error: {np.max(rel_errors):.2e}"
 
     def test_eigenfunctions_satisfy_bcs(self):
         """Test that eigenfunctions satisfy boundary conditions.
@@ -345,8 +284,8 @@ class TestBackwardCompatibility:
         disc = OpDiscretization.build_discretization(linop, n)
 
         # Should be square
-        assert disc['rectangularization'] is False
-        A_block = disc['blocks'][0]
+        assert disc["rectangularization"] is False
+        A_block = disc["blocks"][0]
         assert A_block.shape[0] == A_block.shape[1], "Default should be square"
 
     def test_eigs_default_is_square(self):

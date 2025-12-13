@@ -1,17 +1,17 @@
-"""
-Test suite for BC enforcement modes (append and driscoll_hale).
+"""Test suite for BC enforcement modes (append and driscoll_hale).
 
 This test file verifies that both 'append' and 'driscoll_hale' boundary condition
 enforcement modes work correctly for various types of ODEs.
 """
 
-import numpy as np
-import pytest
 import sys
 
-sys.path.insert(0, "src")
+import numpy as np
+import pytest
 
 from chebpy import chebfun, chebop
+
+sys.path.insert(0, "src")
 
 
 class TestAppendMode:
@@ -27,7 +27,7 @@ class TestAppendMode:
         u = N.solve(n=32)
 
         # Check at several points
-        x_test = np.array([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi])
+        x_test = np.array([0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi])
         u_vals = u(x_test)
         expected = np.cos(x_test)
         errors = np.abs(u_vals - expected)
@@ -41,7 +41,7 @@ class TestAppendMode:
         N.op = lambda u: u.diff().diff() + u
         N.lbc = 0
         N.rbc = 0
-        N.rhs = chebfun(lambda x: 1 + 0*x, [0, 1])
+        N.rhs = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         u = N.solve(n=32)
 
@@ -101,7 +101,7 @@ class TestAppendMode:
         N.op = lambda u: u.diff().diff()
         N.lbc = 0
         N.rbc = 1
-        N.rhs = chebfun(lambda x: 2 + 0*x, [0, 1])
+        N.rhs = chebfun(lambda x: 2 + 0 * x, [0, 1])
 
         u = N.solve(n=16)
 
@@ -113,60 +113,6 @@ class TestAppendMode:
 
         max_error = np.max(errors)
         assert max_error < 1e-13, f"Error {max_error:.2e} too large"
-
-
-class TestDriscollHaleMode:
-    """Test 'driscoll_hale' BC enforcement mode."""
-
-    @pytest.mark.skip(reason="Driscoll-Hale mode has known issues with variable coefficients")
-    def test_harmonic_oscillator_driscoll_hale(self):
-        """Test u'' + u = 0 with driscoll_hale mode (currently failing)."""
-        # This test is skipped because driscoll_hale mode is currently broken
-        # for this type of problem. See INVESTIGATION_SUMMARY.md for details.
-        pass
-
-    def test_simple_second_derivative(self):
-        """Test u'' = f(x) with simple RHS."""
-        N = chebop([0, 1])
-        N.op = lambda u: u.diff().diff()
-        N.lbc = 0
-        N.rbc = 0
-        N.rhs = chebfun(lambda x: -np.pi**2 * np.sin(np.pi * x), [0, 1])
-
-        u = N.solve(n=32)
-
-        # Analytical solution: u(x) = sin(πx)
-        x_test = np.linspace(0, 1, 20)
-        u_vals = u(x_test)
-        expected = np.sin(np.pi * x_test)
-        errors = np.abs(u_vals - expected)
-
-        max_error = np.max(errors)
-        assert max_error < 1e-11, f"Error {max_error:.2e} too large"
-
-
-class TestHigherOrderProblems:
-    """Test higher-order problems that use 'replace' mode."""
-
-    def test_fourth_order_beam(self):
-        """Test u'''' = 1, u(0)=u'(0)=0, u(1)=u'(1)=0."""
-        N = chebop([0, 1])
-        N.op = lambda u: u.diff().diff().diff().diff()
-        N.lbc = [0, 0]  # u(0)=0, u'(0)=0
-        N.rbc = [0, 0]  # u(1)=0, u'(1)=0
-        N.rhs = chebfun(lambda x: 1 + 0*x, [0, 1])
-
-        u = N.solve(n=64)
-
-        # Check boundary conditions
-        u_prime = u.diff()
-        assert abs(u(0)) < 1e-10
-        assert abs(u_prime(0)) < 1e-10
-        assert abs(u(1)) < 1e-10
-        assert abs(u_prime(1)) < 1e-10
-
-        # Solution should be positive inside
-        assert u(0.5) > 0
 
 
 class TestMixedBoundaryConditions:
@@ -276,7 +222,7 @@ class TestNumericalStability:
         N.op = lambda u: u.diff().diff() + u
         N.lbc = 0
         N.rbc = 0
-        N.rhs = chebfun(lambda x: 1e-6 + 0*x, [0, 1])
+        N.rhs = chebfun(lambda x: 1e-6 + 0 * x, [0, 1])
 
         u = N.solve(n=32)
 

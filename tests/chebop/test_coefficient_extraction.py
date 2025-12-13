@@ -1,4 +1,4 @@
-"""Comprehensive tests for coefficient extraction from linear operators.
+"""Tests for coefficient extraction from linear operators.
 
 These tests verify that the coefficient extraction mechanism correctly
 identifies the coefficient functions c_k(x) for operators of the form:
@@ -15,7 +15,6 @@ The tests cover:
 """
 
 import numpy as np
-import pytest
 
 from chebpy import chebfun, chebop
 
@@ -65,7 +64,7 @@ class TestConstantCoefficientExtraction:
     def test_laplacian_plus_constant(self):
         """L[u] = u'' + 2u -> c_0 = 2, c_1 = 0, c_2 = 1."""
         N = chebop([0, 1])
-        N.op = lambda u: u.diff(2) + 2*u
+        N.op = lambda u: u.diff(2) + 2 * u
         N.analyze_operator()
 
         coeffs = N._coeffs
@@ -78,7 +77,7 @@ class TestConstantCoefficientExtraction:
     def test_advection_diffusion(self):
         """L[u] = u'' + 3u' + u -> c_0 = 1, c_1 = 3, c_2 = 1."""
         N = chebop([0, 1])
-        N.op = lambda u: u.diff(2) + 3*u.diff() + u
+        N.op = lambda u: u.diff(2) + 3 * u.diff() + u
         N.analyze_operator()
 
         coeffs = N._coeffs
@@ -91,7 +90,7 @@ class TestConstantCoefficientExtraction:
     def test_negative_coefficients(self):
         """L[u] = u'' - 5u' - 10u."""
         N = chebop([0, 1])
-        N.op = lambda u: u.diff(2) - 5*u.diff() - 10*u
+        N.op = lambda u: u.diff(2) - 5 * u.diff() - 10 * u
         N.analyze_operator()
 
         coeffs = N._coeffs
@@ -155,7 +154,7 @@ class TestVariableCoefficientExtraction:
     def test_all_variable(self):
         """L[u] = (1+x)u'' + x*u' + (1-x)u."""
         N = chebop([0, 1])
-        N.op = lambda x, u: (1+x)*u.diff(2) + x*u.diff() + (1-x)*u
+        N.op = lambda x, u: (1 + x) * u.diff(2) + x * u.diff() + (1 - x) * u
         N.analyze_operator()
 
         coeffs = N._coeffs
@@ -199,7 +198,7 @@ class TestHigherOrderOperators:
     def test_airy_operator(self):
         """Airy: L[u] = u'' - x*u."""
         N = chebop([-1, 1])
-        N.op = lambda x, u: u.diff(2) - x*u
+        N.op = lambda x, u: u.diff(2) - x * u
         N.analyze_operator()
 
         coeffs = N._coeffs
@@ -227,7 +226,7 @@ class TestDifferentDomains:
     def test_large_domain(self):
         """L[u] = u'' + x*u on [-5, 5]."""
         N = chebop([-5, 5])
-        N.op = lambda x, u: u.diff(2) + x*u
+        N.op = lambda x, u: u.diff(2) + x * u
         N.analyze_operator()
 
         coeffs = N._coeffs
@@ -252,7 +251,8 @@ class TestJacobianCoefficients:
     """Tests for coefficient extraction from Jacobians of nonlinear operators."""
 
     def test_u_squared_jacobian(self):
-        """N(u) = u^2 at u=x -> J[u](v) = 2u*v = 2x*v
+        """N(u) = u^2 at u=x -> J[u](v) = 2u*v = 2x*v.
+
         So c_0 = 2x, c_1 = c_2 = 0.
         """
         N = chebop([0, 1])
@@ -270,11 +270,12 @@ class TestJacobianCoefficients:
         np.testing.assert_allclose(coeffs[0](x_test), [0, 1, 2], atol=1e-9)
 
     def test_u_prime_squared_jacobian(self):
-        """N(u) = (u')^2 at u=x (so u'=1) -> J[u](v) = 2u'*v' = 2*v'
+        """N(u) = (u')^2 at u=x (so u'=1) -> J[u](v) = 2u'*v' = 2*v'.
+
         So c_0 = 0, c_1 = 2, c_2 = 0.
         """
         N = chebop([0, 1])
-        N.op = lambda u: u.diff()**2
+        N.op = lambda u: u.diff() ** 2
         N.lbc = 0
         N.rbc = 1
         N.analyze_operator()
@@ -289,7 +290,8 @@ class TestJacobianCoefficients:
         np.testing.assert_allclose(coeffs[1](x_test), [2, 2, 2], atol=1e-9)
 
     def test_laplacian_plus_u_squared(self):
-        """N(u) = u'' + u^2 at u=x -> J[u](v) = v'' + 2u*v
+        """N(u) = u'' + u^2 at u=x -> J[u](v) = v'' + 2u*v.
+
         So c_0 = 2x, c_1 = 0, c_2 = 1.
         """
         N = chebop([0, 1])
@@ -309,7 +311,8 @@ class TestJacobianCoefficients:
         np.testing.assert_allclose(coeffs[2](x_test), [1, 1, 1], atol=1e-9)
 
     def test_cubic_jacobian(self):
-        """N(u) = u^3 at u=x -> J[u](v) = 3u^2*v = 3x^2*v
+        """N(u) = u^3 at u=x -> J[u](v) = 3u^2*v = 3x^2*v.
+
         So c_0 = 3x^2.
         """
         N = chebop([0, 1])
@@ -345,7 +348,8 @@ class TestJacobianCoefficients:
         np.testing.assert_allclose(coeffs[0](x_test), expected, atol=1e-9)
 
     def test_jacobian_u_times_uprime(self):
-        """N(u) = u*u' at u=x -> J[u](v) = u'*v + u*v' = 1*v + x*v'
+        """N(u) = u*u' at u=x -> J[u](v) = u'*v + u*v' = 1*v + x*v'.
+
         So c_0 = 1, c_1 = x.
         """
         N = chebop([0, 1])
@@ -366,7 +370,7 @@ class TestJacobianCoefficients:
     def test_jacobian_uprime_squared(self):
         """N(u) = (u')^2 at u=sin(x) -> J[u](v) = 2u'*v' = 2cos(x)*v'."""
         N = chebop([0, 1])
-        N.op = lambda u: u.diff()**2
+        N.op = lambda u: u.diff() ** 2
         N.lbc = 0
         N.rbc = np.sin(1)
         N.analyze_operator()
@@ -411,12 +415,13 @@ class TestComplexOperators:
         np.testing.assert_allclose(coeffs[2](x_test), [0, 0.25, 1], atol=1e-10)
 
     def test_sturm_liouville_form(self):
-        """Sturm-Liouville: (p(x)u')' + q(x)u with p=1+x, q=x
+        """Sturm-Liouville: (p(x)u')' + q(x)u with p=1+x, q=x.
+
         Expands to: p*u'' + p'*u' + q*u = (1+x)u'' + u' + x*u.
         """
         N = chebop([0, 1])
         # Direct form
-        N.op = lambda x, u: (1+x)*u.diff(2) + u.diff() + x*u
+        N.op = lambda x, u: (1 + x) * u.diff(2) + u.diff() + x * u
         N.analyze_operator()
 
         coeffs = N._coeffs
@@ -448,13 +453,13 @@ class TestComplexOperators:
         """Legendre-like: (1-x^2)*u'' - 2*x*u' + n(n+1)*u with n=2."""
         n = 2
         N = chebop([-0.9, 0.9])  # Avoid singularities at ±1
-        N.op = lambda x, u: (1-x**2)*u.diff(2) - 2*x*u.diff() + n*(n+1)*u
+        N.op = lambda x, u: (1 - x**2) * u.diff(2) - 2 * x * u.diff() + n * (n + 1) * u
         N.analyze_operator()
 
         coeffs = N._coeffs
         x_test = np.array([-0.5, 0.0, 0.5])
 
-        expected_c0 = np.full(3, n*(n+1))  # = 6
+        expected_c0 = np.full(3, n * (n + 1))  # = 6
         expected_c1 = -2 * x_test
         expected_c2 = 1 - x_test**2
 
@@ -492,7 +497,7 @@ class TestEdgeCases:
     def test_oscillatory_coefficient(self):
         """L[u] = sin(10x)*u (oscillatory coefficient)."""
         N = chebop([0, 1])
-        N.op = lambda x, u: np.sin(10*x) * u
+        N.op = lambda x, u: np.sin(10 * x) * u
         N.analyze_operator()
 
         coeffs = N._coeffs
@@ -512,13 +517,13 @@ class TestVerificationBySolving:
         # f = -π²sin(πx) + x*sin(πx) = sin(πx)(-π² + x)
 
         N = chebop([0, 1])
-        N.op = lambda x, u: u.diff(2) + x*u
+        N.op = lambda x, u: u.diff(2) + x * u
         N.lbc = 0  # sin(0) = 0
         N.rbc = 0  # sin(π) = 0
-        N.rhs = chebfun(lambda x: np.sin(np.pi*x)*(-np.pi**2 + x), [0, 1])
+        N.rhs = chebfun(lambda x: np.sin(np.pi * x) * (-(np.pi**2) + x), [0, 1])
 
         u = N.solve()
-        exact = chebfun(lambda x: np.sin(np.pi*x), [0, 1])
+        exact = chebfun(lambda x: np.sin(np.pi * x), [0, 1])
 
         x_test = np.linspace(0, 1, 100)
         error = np.max(np.abs(u(x_test) - exact(x_test)))
@@ -531,10 +536,10 @@ class TestVerificationBySolving:
         N.op = lambda u: u.diff(2) + k**2 * u
         N.lbc = 1  # u(0) = 1
         N.rbc = np.cos(k)  # u(1) = cos(k)
-        N.rhs = chebfun(lambda x: 0*x, [0, 1])
+        N.rhs = chebfun(lambda x: 0 * x, [0, 1])
 
         u = N.solve()
-        exact = chebfun(lambda x: np.cos(k*x), [0, 1])
+        exact = chebfun(lambda x: np.cos(k * x), [0, 1])
 
         x_test = np.linspace(0, 1, 100)
         error = np.max(np.abs(u(x_test) - exact(x_test)))

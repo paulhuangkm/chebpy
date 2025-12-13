@@ -18,9 +18,9 @@ class TestCoefficientsValidation:
         domain = Domain([0, 1])
 
         # 2nd order: need 3 coefficients
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         # Should not warn
         with warnings.catch_warnings():
@@ -32,8 +32,8 @@ class TestCoefficientsValidation:
         domain = Domain([0, 1])
 
         # 2nd order but only 2 coefficients provided (missing one)
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
 
         # Should warn
         with pytest.warns(UserWarning, match="Coefficient list length"):
@@ -49,12 +49,12 @@ class TestCoefficientsValidation:
         domain = Domain([0, 1])
 
         # 1st order but 3 coefficients provided - this is OK for composed operators
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         # Should NOT warn (intentional behavior per Issue #8)
-        import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("error")  # Turn warnings into errors
             L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=1)
@@ -102,22 +102,21 @@ class TestConditionNumberWarning:
 
         # Simple Poisson: u'' = 1, u(0) = 0, u(1) = 0
         # This is a well-conditioned problem
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
         L.rbc = 0
-        L.rhs = chebfun(lambda x: 1 + 0*x, [0, 1])
+        L.rhs = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L.max_n = 16
 
         # Should not warn about condition number
         with warnings.catch_warnings(record=True) as w:
             L.solve()
             # Check no ill-conditioning warnings
-            cond_warnings = [warning for warning in w
-                           if "ill-conditioned" in str(warning.message)]
+            cond_warnings = [warning for warning in w if "ill-conditioned" in str(warning.message)]
             assert len(cond_warnings) == 0
 
     def test_ill_conditioned_warns(self):
@@ -127,16 +126,16 @@ class TestConditionNumberWarning:
         # Create an ill-conditioned problem: high order derivative with large domain scaling
         # u'''' = eps * u where eps is tiny
         eps = 1e-10
-        a0 = chebfun(lambda x: -eps + 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 0*x, [0, 1])
-        a3 = chebfun(lambda x: 0*x, [0, 1])
-        a4 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: -eps + 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 0 * x, [0, 1])
+        a3 = chebfun(lambda x: 0 * x, [0, 1])
+        a4 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2, a3, a4], domain=domain, diff_order=4)
         L.lbc = [0, 0]  # u(0) = u'(0) = 0
         L.rbc = [1, 0]  # u(1) = 1, u'(1) = 0
-        L.rhs = chebfun(lambda x: 0*x, [0, 1])
+        L.rhs = chebfun(lambda x: 0 * x, [0, 1])
         L.max_n = 32
 
         # Should warn about ill-conditioning
@@ -144,8 +143,7 @@ class TestConditionNumberWarning:
         with warnings.catch_warnings(record=True) as w:
             L.solve()
             # Check if there's an ill-conditioning warning (may or may not trigger depending on n)
-            cond_warnings = [warning for warning in w
-                           if "ill-conditioned" in str(warning.message)]
+            cond_warnings = [warning for warning in w if "ill-conditioned" in str(warning.message)]
             # If it warns, the message should contain "cond(A)"
             if len(cond_warnings) > 0:
                 assert "cond(A)" in str(cond_warnings[0].message)

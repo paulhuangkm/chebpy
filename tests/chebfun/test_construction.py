@@ -9,12 +9,7 @@ import pytest
 
 from chebpy.bndfun import Bndfun
 from chebpy.chebfun import Chebfun
-from chebpy.exceptions import (
-    BadFunLengthArgument,
-    IntervalGap,
-    IntervalOverlap,
-    InvalidDomain,
-)
+from chebpy.exceptions import BadFunLengthArgument, IntervalGap, IntervalOverlap, InvalidDomain
 from chebpy.utilities import Interval
 
 from ..utilities import eps, exp

@@ -185,8 +185,10 @@ class AdChebfun:
 
     def __rsub__(self, other) -> "AdChebfun":
         """Right subtract: c - f."""
-        if isinstance(other, Chebfun):
+        if isinstance(other, Chebfun):  # pragma: no cover
             # Treat regular Chebfun as constant (zero Jacobian contribution)
+            # Note: This branch is unreachable because Chebfun.__sub__ doesn't
+            # return NotImplemented - it tries to handle everything directly.
             new_func = other - self.func
             new_jacobian = -self.jacobian
             return AdChebfun(new_func, self.n, new_jacobian)

@@ -16,7 +16,7 @@ from scipy.linalg import toeplitz
 
 from .algorithms import barywts2, chebpts2
 from .sparse_utils import sparse_to_dense
-from .utilities import Interval
+from .utilities import Interval, ensure_interval
 
 
 def cheb_points_scaled(n, interval: Interval):
@@ -71,7 +71,7 @@ def diff_matrix_rectangular(n, m, interval, order=1):
 
     Notes:
         - For square case (m = n), this reduces to standard diff_matrix().
-        - Typical choices: m = 2*n or m = n + 50 (MATLAB Chebfun heuristic).
+        - Typical choices: m = 2*n or m = n + 50 for overdetermination.
         - See Driscoll & Hale (2016), "Rectangular spectral collocation".
 
     Examples:
@@ -154,7 +154,7 @@ def diff_matrix_driscoll_hale(n, interval, order=1):
     # Number of output points (one fewer for each derivative order)
     m = n - order
 
-    if m < 0:
+    if m < 0:  # pragma: no cover  # Unreachable - caught by n < order check above
         raise ValueError(f"Cannot take order-{order} derivative of degree-{n} polynomial")
 
     # For the Driscoll-Hale approach, we need to:
@@ -276,14 +276,14 @@ def mult_matrix(chebfun, n, interval=None):
     """
     # Get Chebyshev points on the specified or chebfun's domain
     if interval is None:
-        interval = chebfun.support
+        interval = ensure_interval(chebfun.support)
 
     x = cheb_points_scaled(n, interval)
 
     # Evaluate chebfun at these points
     values = chebfun(x)
 
-    # Ensure values is 1D (MATLAB Chebfun returns column vectors)
+    # Ensure values is 1D
     values = np.atleast_1d(values).ravel()
 
     # Create diagonal matrix
@@ -703,12 +703,15 @@ def ultraspherical_conversion(n, lmbda):
 
         # Build main diagonal
         main_diag = np.ones(n)
-        main_diag[1:] = 0.5
+        if n > 1:
+            main_diag[1:] = 0.5
 
-        # Superdiagonal at offset +2
-        super_diag = -0.5 * np.ones(n - 2) if n >= 2 else np.array([])
-
-        S = sparse.diags([main_diag, super_diag], [0, 2], shape=(n, n), format="csr")
+        # Superdiagonal at offset +2 (only if n >= 3)
+        if n >= 3:
+            super_diag = -0.5 * np.ones(n - 2)
+            S = sparse.diags([main_diag, super_diag], [0, 2], shape=(n, n), format="csr")
+        else:
+            S = sparse.diags([main_diag], [0], shape=(n, n), format="csr")
         return S
 
     else:
@@ -726,14 +729,13 @@ def ultraspherical_conversion(n, lmbda):
             k_vals = np.arange(2, n)
             main_diag[2:] = lmbda / (lmbda + k_vals)
 
-        # Superdiagonal at offset +2
+        # Superdiagonal at offset +2 (only if n >= 3)
         if n >= 3:
             k_super = np.arange(0, n - 2)
             super_diag = -lmbda / (lmbda + k_super + 2)
+            S = sparse.diags([main_diag, super_diag], [0, 2], shape=(n, n), format="csr")
         else:
-            super_diag = np.array([])
-
-        S = sparse.diags([main_diag, super_diag], [0, 2], shape=(n, n), format="csr")
+            S = sparse.diags([main_diag], [0], shape=(n, n), format="csr")
         return S
 
 
@@ -857,8 +859,8 @@ def ultraspherical_bc_row(n, interval, bc_order, bc_side):
             row[k] = sign(k) * val
     else:
         # General case using explicit formula for T^(m)_k at ±1
-        # This gets complicated - for now raise error for order > 2
-        raise NotImplementedError(f"BC order {bc_order} not yet implemented in ultraspherical method")
+        # This gets complicated - raise error for order > 2
+        raise NotImplementedError(f"BC order {bc_order} not implemented in ultraspherical method")
 
     return row
 
@@ -890,11 +892,9 @@ def ultraspherical_solve(coeffs, rhs_coeffs, n, interval, lbc, rbc):
     a, b = interval if hasattr(interval, "__iter__") else (interval.a, interval.b)
     L = (b - a) / 2
 
-    # Only support 2nd order for now
+    # Only support 2nd order
     if diff_order != 2:
-        raise NotImplementedError(
-            f"Ultraspherical method currently only supports 2nd order ODEs, got order {diff_order}"
-        )
+        raise NotImplementedError(f"Ultraspherical method supports 2nd order ODEs only, got order {diff_order}")
 
     # Following MATLAB's approach:
     # 1. Build matrices: D0 (n×n), D1 ((n-1)×(n-1)), S0 (n×n), S1 (n×n)
@@ -932,7 +932,7 @@ def ultraspherical_solve(coeffs, rhs_coeffs, n, interval, lbc, rbc):
     # PROJECTION STEP: Remove last m=2 rows (MATLAB's reduce() operation)
     m = diff_order  # For 2nd order ODE, m = 2
     if L_op.shape[0] > m:
-        L_op_reduced = L_op[: -m, :]
+        L_op_reduced = L_op[:-m, :]
     else:
         raise ValueError(f"Matrix too small for projection: {L_op.shape[0]} rows, need to remove {m}")
 
@@ -941,16 +941,18 @@ def ultraspherical_solve(coeffs, rhs_coeffs, n, interval, lbc, rbc):
     bc_values = []
 
     # Process left BCs
+    # Note: ultraspherical_bc_row(n, ...) returns n+1 elements,
+    # but our matrices are n x n. So we pass n-1 to get n elements.
     if lbc is not None:
         if isinstance(lbc, (int, float)):
             # Dirichlet: u(a) = lbc
-            row = ultraspherical_bc_row(n, interval, 0, "left")
+            row = ultraspherical_bc_row(n - 1, interval, 0, "left")
             bc_rows.append(row)
             bc_values.append(lbc)
         elif isinstance(lbc, list):
             for i, val in enumerate(lbc):
                 if val is not None:
-                    row = ultraspherical_bc_row(n, interval, i, "left")
+                    row = ultraspherical_bc_row(n - 1, interval, i, "left")
                     bc_rows.append(row)
                     bc_values.append(val)
 
@@ -958,13 +960,13 @@ def ultraspherical_solve(coeffs, rhs_coeffs, n, interval, lbc, rbc):
     if rbc is not None:
         if isinstance(rbc, (int, float)):
             # Dirichlet: u(b) = rbc
-            row = ultraspherical_bc_row(n, interval, 0, "right")
+            row = ultraspherical_bc_row(n - 1, interval, 0, "right")
             bc_rows.append(row)
             bc_values.append(rbc)
         elif isinstance(rbc, list):
             for i, val in enumerate(rbc):
                 if val is not None:
-                    row = ultraspherical_bc_row(n, interval, i, "right")
+                    row = ultraspherical_bc_row(n - 1, interval, i, "right")
                     bc_rows.append(row)
                     bc_values.append(val)
 
@@ -988,7 +990,7 @@ def ultraspherical_solve(coeffs, rhs_coeffs, n, interval, lbc, rbc):
     rhs_c2 = S1 @ rhs_c1
 
     # Project: remove last m=2 entries
-    rhs_c2_projected = rhs_c2[: -m] if len(rhs_c2) > m else rhs_c2
+    rhs_c2_projected = rhs_c2[:-m] if len(rhs_c2) > m else rhs_c2
 
     # Full RHS: BC values + projected interior RHS
     b = np.concatenate([bc_values, rhs_c2_projected])

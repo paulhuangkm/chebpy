@@ -19,21 +19,21 @@ class TestArithmetic:
     def test_addition(self):
         """Test addition of Trigtech objects."""
         f = Trigtech.initfun_adaptive(lambda x: np.sin(x))
-        g = Trigtech.initfun_adaptive(lambda x: np.cos(2*x))
+        g = Trigtech.initfun_adaptive(lambda x: np.cos(2 * x))
         h = f + g
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        expected = np.sin(x_test) + np.cos(2*x_test)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        expected = np.sin(x_test) + np.cos(2 * x_test)
         assert np.max(np.abs(h(x_test) - expected)) < 1e-12
 
     def test_subtraction(self):
         """Test subtraction of Trigtech objects."""
-        f = Trigtech.initfun_adaptive(lambda x: np.sin(2*x))
+        f = Trigtech.initfun_adaptive(lambda x: np.sin(2 * x))
         g = Trigtech.initfun_adaptive(lambda x: np.cos(x))
         h = f - g
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        expected = np.sin(2*x_test) - np.cos(x_test)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        expected = np.sin(2 * x_test) - np.cos(x_test)
         assert np.max(np.abs(h(x_test) - expected)) < 1e-12
 
     def test_multiplication(self):
@@ -42,7 +42,7 @@ class TestArithmetic:
         g = Trigtech.initfun_adaptive(lambda x: np.cos(x))
         h = f * g
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = np.sin(x_test) * np.cos(x_test)
         # Product should equal sin(2x)/2
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
@@ -53,46 +53,46 @@ class TestArithmetic:
         g = Trigtech.initfun_adaptive(lambda x: np.cos(x) + 3)
         h = f / g
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = (np.sin(x_test) + 2) / (np.cos(x_test) + 3)
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
     def test_scalar_multiplication(self):
         """Test multiplication by a scalar."""
-        f = Trigtech.initfun_adaptive(lambda x: np.sin(3*x))
+        f = Trigtech.initfun_adaptive(lambda x: np.sin(3 * x))
         c = 2.5
         h = c * f
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        expected = c * np.sin(3*x_test)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        expected = c * np.sin(3 * x_test)
         assert np.max(np.abs(h(x_test) - expected)) < 1e-12
 
     def test_scalar_addition(self):
         """Test addition of a scalar."""
-        f = Trigtech.initfun_adaptive(lambda x: np.cos(2*x))
+        f = Trigtech.initfun_adaptive(lambda x: np.cos(2 * x))
         c = 1.5
         h = f + c
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        expected = np.cos(2*x_test) + c
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        expected = np.cos(2 * x_test) + c
         assert np.max(np.abs(h(x_test) - expected)) < 1e-12
 
     def test_negation(self):
         """Test negation of Trigtech objects."""
-        f = Trigtech.initfun_adaptive(lambda x: np.sin(x) + np.cos(2*x))
+        f = Trigtech.initfun_adaptive(lambda x: np.sin(x) + np.cos(2 * x))
         h = -f
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        expected = -(np.sin(x_test) + np.cos(2*x_test))
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        expected = -(np.sin(x_test) + np.cos(2 * x_test))
         assert np.max(np.abs(h(x_test) - expected)) < 1e-12
 
     def test_power(self):
         """Test exponentiation of Trigtech objects."""
-        f = Trigtech.initfun_adaptive(lambda x: 1 + 0.5*np.cos(x))
-        h = f ** 2
+        f = Trigtech.initfun_adaptive(lambda x: 1 + 0.5 * np.cos(x))
+        h = f**2
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        expected = (1 + 0.5*np.cos(x_test)) ** 2
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        expected = (1 + 0.5 * np.cos(x_test)) ** 2
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
 
@@ -104,7 +104,7 @@ class TestTranscendental:
         f = Trigtech.initfun_adaptive(lambda x: 0.1 * np.sin(x))
         h = np.exp(f)
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = np.exp(0.1 * np.sin(x_test))
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
@@ -119,7 +119,7 @@ class TestTranscendental:
             f = Trigtech.initfun_adaptive(lambda x: x)
         h = np.sin(f)
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = np.sin(x_test)
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
@@ -131,11 +131,11 @@ class TestTranscendental:
         """
         # Expect warning since 2*x is not periodic on [0, 2π]
         with pytest.warns(UserWarning, match="did not converge"):
-            f = Trigtech.initfun_adaptive(lambda x: 2*x)
+            f = Trigtech.initfun_adaptive(lambda x: 2 * x)
         h = np.cos(f)
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        expected = np.cos(2*x_test)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        expected = np.cos(2 * x_test)
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
     def test_sqrt(self):
@@ -143,7 +143,7 @@ class TestTranscendental:
         f = Trigtech.initfun_adaptive(lambda x: 2 + np.cos(x))
         h = np.sqrt(f)
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = np.sqrt(2 + np.cos(x_test))
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
@@ -152,7 +152,7 @@ class TestTranscendental:
         f = Trigtech.initfun_adaptive(lambda x: 2 + np.sin(x))
         h = np.log(f)
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = np.log(2 + np.sin(x_test))
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
@@ -166,7 +166,7 @@ class TestComposition:
         # Compose: sin(sin(x))
         h = np.sin(f)
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = np.sin(np.sin(x_test))
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
@@ -174,9 +174,9 @@ class TestComposition:
         """Test composition that creates higher harmonics."""
         f = Trigtech.initfun_adaptive(lambda x: np.cos(x))
         # (cos(x))^3 = (3cos(x) + cos(3x))/4
-        h = f ** 3
+        h = f**3
 
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = np.cos(x_test) ** 3
         assert np.max(np.abs(h(x_test) - expected)) < 1e-11
 
@@ -199,18 +199,18 @@ class TestEdgeCases:
         f = Trigtech.initfun_adaptive(lambda x: np.sin(x))
 
         h = c + f
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
         expected = 3.0 + np.sin(x_test)
         assert np.max(np.abs(h(x_test) - expected)) < 1e-12
 
     def test_zero_function(self):
         """Test operations with zero function."""
         zero = Trigtech.initconst(0.0)
-        f = Trigtech.initfun_adaptive(lambda x: np.cos(2*x))
+        f = Trigtech.initfun_adaptive(lambda x: np.cos(2 * x))
 
         h = zero + f
-        x_test = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        assert np.max(np.abs(h(x_test) - np.cos(2*x_test))) < 1e-12
+        x_test = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        assert np.max(np.abs(h(x_test) - np.cos(2 * x_test))) < 1e-12
 
 
 class TestPropertiesPreserved:
@@ -218,23 +218,23 @@ class TestPropertiesPreserved:
 
     def test_addition_preserves_periodicity(self):
         """Verify that sum of periodic functions is periodic."""
-        f = Trigtech.initfun_adaptive(lambda x: np.sin(2*x))
-        g = Trigtech.initfun_adaptive(lambda x: np.cos(3*x))
+        f = Trigtech.initfun_adaptive(lambda x: np.sin(2 * x))
+        g = Trigtech.initfun_adaptive(lambda x: np.cos(3 * x))
         h = f + g
 
-        assert np.abs(h(np.array([0.0]))[0] - h(np.array([2*np.pi]))[0]) < 1e-12
+        assert np.abs(h(np.array([0.0]))[0] - h(np.array([2 * np.pi]))[0]) < 1e-12
 
     def test_product_preserves_periodicity(self):
         """Verify that product of periodic functions is periodic."""
         f = Trigtech.initfun_adaptive(lambda x: np.sin(x))
-        g = Trigtech.initfun_adaptive(lambda x: np.cos(2*x))
+        g = Trigtech.initfun_adaptive(lambda x: np.cos(2 * x))
         h = f * g
 
-        assert np.abs(h(np.array([0.0]))[0] - h(np.array([2*np.pi]))[0]) < 1e-12
+        assert np.abs(h(np.array([0.0]))[0] - h(np.array([2 * np.pi]))[0]) < 1e-12
 
     def test_composition_preserves_periodicity(self):
         """Verify that composition preserves periodicity."""
         f = Trigtech.initfun_adaptive(lambda x: 0.5 * np.sin(x))
         h = np.exp(f)
 
-        assert np.abs(h(np.array([0.0]))[0] - h(np.array([2*np.pi]))[0]) < 1e-12
+        assert np.abs(h(np.array([0.0]))[0] - h(np.array([2 * np.pi]))[0]) < 1e-12

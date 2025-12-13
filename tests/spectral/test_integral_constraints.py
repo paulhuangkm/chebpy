@@ -27,17 +27,17 @@ class TestIntegralConstraintsBasics:
         domain = Domain([0, 1])
 
         # u'' = 1
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0  # u(0) = 0
 
         # Integral constraint: ∫₀¹ u dx = 0
-        L.integral_constraint = {'weight': None, 'value': 0}
+        L.integral_constraint = {"weight": None, "value": 0}
 
-        L.rhs = chebfun(lambda x: 1 + 0*x, [0, 1])
+        L.rhs = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         u = L.solve()
 
@@ -53,18 +53,18 @@ class TestIntegralConstraintsBasics:
         domain = Domain([0, 1])
 
         # u'' = 0 (Laplace equation)
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0  # u(0) = 0
 
         # Weighted integral constraint: ∫₀¹ x*u(x) dx = 1
         weight = chebfun(lambda x: x, [0, 1])
-        L.integral_constraint = {'weight': weight, 'value': 1.0}
+        L.integral_constraint = {"weight": weight, "value": 1.0}
 
-        L.rhs = chebfun(lambda x: 0*x, [0, 1])
+        L.rhs = chebfun(lambda x: 0 * x, [0, 1])
 
         u = L.solve()
 
@@ -80,9 +80,9 @@ class TestIntegralConstraintsBasics:
         domain = Domain([0, np.pi])
 
         # -u'' = λu with u(0) = u(π) = 0
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, np.pi])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -108,44 +108,23 @@ class TestConservationLaws:
         domain = Domain([0, 1])
 
         # u'' = -u with ∫u dx = 2
-        a0 = chebfun(lambda x: -1 + 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: -1 + 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 1  # u(0) = 1
 
         # Mass conservation: ∫u dx = 2
-        L.integral_constraint = {'weight': None, 'value': 2.0}
+        L.integral_constraint = {"weight": None, "value": 2.0}
 
-        L.rhs = chebfun(lambda x: 0*x, [0, 1])
+        L.rhs = chebfun(lambda x: 0 * x, [0, 1])
 
         u = L.solve()
 
         # Check integral
         mass = u.sum()
         assert abs(mass - 2.0) < 1e-6
-
-    def test_center_of_mass_constraint(self):
-        """Test with center of mass constraint: ∫ x*u dx / ∫ u dx = x_cm."""
-        # This is more complex - would need two integral constraints
-        # or a nonlinear constraint. Skip for now.
-        pass
-
-
-class TestMultipleConstraints:
-    """Tests for problems with multiple integral constraints."""
-
-    def test_mean_and_variance(self):
-        """Test with both mean and second moment constraints.
-
-        This would require multiple integral constraints:
-        ∫ u dx = μ
-        ∫ x²u dx = σ² + μ²
-        """
-        # Would need LinOp to accept list of integral constraints
-        # This tests future functionality
-        pass
 
 
 class TestIntegralConstraintImplementation:
@@ -159,15 +138,15 @@ class TestIntegralConstraintImplementation:
         """
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
 
         # Add integral constraint
-        L.integral_constraint = {'weight': None, 'value': 1.0}
+        L.integral_constraint = {"weight": None, "value": 1.0}
 
         # The implementation should add this as a BC row
         # Current LinOp might not support this yet, so this is aspirational
@@ -192,15 +171,15 @@ class TestPhysicalProblems:
         """
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
         L.rbc = 0
 
-        f = chebfun(lambda x: np.sin(np.pi*x), [0, 1])
+        f = chebfun(lambda x: np.sin(np.pi * x), [0, 1])
         L.rhs = f
 
         u = L.solve()
@@ -220,9 +199,9 @@ class TestPhysicalProblems:
         """
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
@@ -231,11 +210,11 @@ class TestPhysicalProblems:
         L.rbc = lambda u: u.diff()(np.array([1.0]))[0]
 
         # RHS with zero integral (compatibility condition)
-        f = chebfun(lambda x: np.sin(2*np.pi*x), [0, 1])
+        f = chebfun(lambda x: np.sin(2 * np.pi * x), [0, 1])
         L.rhs = f
 
         # Add integral constraint to fix constant: ∫u dx = 0
-        L.integral_constraint = {'weight': None, 'value': 0}
+        L.integral_constraint = {"weight": None, "value": 0}
 
         u = L.solve()
 
@@ -254,9 +233,9 @@ class TestConstraintSyntax:
         """
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -265,10 +244,10 @@ class TestConstraintSyntax:
         # Could specify as callable
         # L.integral_constraint = lambda u: u.sum() - 1.0
 
-        # For now, use dict syntax
-        L.integral_constraint = {'weight': None, 'value': 1.0}
+        # Use dict syntax
+        L.integral_constraint = {"weight": None, "value": 1.0}
 
-        L.rhs = chebfun(lambda x: 1 + 0*x, [0, 1])
+        L.rhs = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         # This should work when implemented
         # u = L.solve()
@@ -281,9 +260,9 @@ class TestConstraintSyntax:
         """
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
@@ -292,7 +271,7 @@ class TestConstraintSyntax:
         L.lbc = 0  # u(0) = 0
         L.rbc = 1  # u(1) = 1
 
-        L.rhs = chebfun(lambda x: 0*x, [0, 1])
+        L.rhs = chebfun(lambda x: 0 * x, [0, 1])
 
         u = L.solve()
 

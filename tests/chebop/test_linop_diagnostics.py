@@ -1,6 +1,6 @@
-"""Comprehensive tests for linop_diagnostics module.
+"""Tests for linop_diagnostics module.
 
-This module provides extensive tests for the diagnostic functions in linop_diagnostics.py
+This module provides tests for the diagnostic functions in linop_diagnostics.py
 that detect and warn about numerical issues in differential operator coefficients.
 
 Tests cover:
@@ -47,9 +47,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [None, None, a2]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain, tol=1e-8
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain, tol=1e-8)
 
         assert not has_issues, "Constant coefficient should have no issues"
         assert len(warnings_list) == 0, "Should have no warnings"
@@ -61,9 +59,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [None, None, a2]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain, tol=1e-8
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain, tol=1e-8)
 
         assert has_issues, "Should detect vanishing coefficient"
         assert len(warnings_list) > 0, "Should have warnings"
@@ -77,9 +73,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [None, None, a2]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain, tol=1e-8
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain, tol=1e-8)
 
         assert has_issues, "Should detect vanishing at x=0"
         assert len(warnings_list) > 0, "Should have warnings"
@@ -94,9 +88,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [None, None, a2]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain, tol=1e-8
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain, tol=1e-8)
 
         assert has_issues, "Should detect sign change"
         # Should have multiple warnings: vanishing + sign change
@@ -112,9 +104,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [None, None, a2]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain, tol=1e-8
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain, tol=1e-8)
 
         # This should NOT trigger issues (variation is small)
         assert not has_issues
@@ -126,9 +116,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [None, None, a2]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain, tol=1e-8
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain, tol=1e-8)
 
         assert has_issues, "Should detect wide variation"
         assert any("varies widely" in w.lower() or "widely" in w.lower() for w in warnings_list)
@@ -138,9 +126,7 @@ class TestCheckCoefficientSingularities:
         coeffs = []
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain)
 
         assert not has_issues
         assert len(warnings_list) == 0
@@ -151,9 +137,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [a0]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=0, domain=domain
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=0, domain=domain)
 
         assert not has_issues
         assert len(warnings_list) == 0
@@ -165,9 +149,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [a0]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain)
 
         assert not has_issues, "Implicit coefficient should be fine"
         assert len(warnings_list) == 0
@@ -177,9 +159,7 @@ class TestCheckCoefficientSingularities:
         coeffs = [None, None, None]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain)
 
         assert not has_issues
         assert len(warnings_list) == 0
@@ -198,9 +178,7 @@ class TestCheckCoefficientSingularities:
         domain = Domain([-1, 1])
 
         # Should not crash, just skip checks
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain)
 
         assert not has_issues
         assert len(warnings_list) == 0
@@ -219,9 +197,7 @@ class TestCheckCoefficientOscillation:
         coeffs = [a0]
         domain = Domain([-1, 1])
 
-        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(
-            coeffs, diff_order=1, domain=domain
-        )
+        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(coeffs, diff_order=1, domain=domain)
 
         assert not is_osc, "Constant coefficient should not be oscillatory"
         assert len(warnings_list) == 0
@@ -253,9 +229,7 @@ class TestCheckCoefficientOscillation:
         coeffs = [a0]
         domain = Domain([-1, 1])
 
-        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(
-            coeffs, diff_order=1, domain=domain
-        )
+        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(coeffs, diff_order=1, domain=domain)
 
         # Should not be flagged as highly oscillatory (threshold 64)
         # but may have some warnings
@@ -285,9 +259,7 @@ class TestCheckCoefficientOscillation:
         coeffs = []
         domain = Domain([-1, 1])
 
-        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(
-            coeffs, diff_order=2, domain=domain
-        )
+        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(coeffs, diff_order=2, domain=domain)
 
         assert not is_osc
         assert len(warnings_list) == 0
@@ -298,9 +270,7 @@ class TestCheckCoefficientOscillation:
         coeffs = [None, None, None]
         domain = Domain([-1, 1])
 
-        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(
-            coeffs, diff_order=2, domain=domain
-        )
+        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(coeffs, diff_order=2, domain=domain)
 
         assert not is_osc
         assert len(warnings_list) == 0
@@ -313,9 +283,7 @@ class TestCheckCoefficientOscillation:
         coeffs = [a0, a1]
         domain = Domain([-1, 1])
 
-        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(
-            coeffs, diff_order=1, domain=domain
-        )
+        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(coeffs, diff_order=1, domain=domain)
 
         # Should detect both if they're highly oscillatory
         if a0.funs[0].size > 50 or a1.funs[0].size > 50:
@@ -324,6 +292,7 @@ class TestCheckCoefficientOscillation:
 
     def test_coeff_without_funs_attribute(self):
         """Test with coefficient that doesn't have funs attribute."""
+
         # Create a plain object without funs
         class SimpleCoeff:
             pass
@@ -332,9 +301,7 @@ class TestCheckCoefficientOscillation:
         domain = Domain([-1, 1])
 
         # Should handle gracefully
-        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(
-            coeffs, diff_order=1, domain=domain
-        )
+        is_osc, warnings_list, suggested_n = check_coefficient_oscillation(coeffs, diff_order=1, domain=domain)
 
         # Should not crash
         assert not is_osc
@@ -611,7 +578,6 @@ class TestDiagnoseLinop:
         N.rbc = lambda u: u(1)  # noqa: E731
 
         # For this test, manually create LinOp with vanishing coefficient
-        from chebpy.utilities import Domain
 
         domain = Domain([-1, 1])
         a2 = chebfun(lambda x: np.zeros_like(x), [-1, 1])  # Vanishing
@@ -651,7 +617,7 @@ class TestDiagnoseLinop:
         L = N.to_linop()
 
         # Should raise ValueError for periodic incompatibility
-        with pytest.raises(ValueError, match="COMPATIBILITY ERROR"):
+        with pytest.raises(ValueError, match="compatibility error"):
             diagnose_linop(L, verbose=False)
 
     def test_diagnose_oscillatory_updates_max_n(self):
@@ -663,7 +629,6 @@ class TestDiagnoseLinop:
         N.rbc = lambda u: u(1)  # noqa: E731
 
         L = N.to_linop()
-        original_max_n = L.max_n
 
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
@@ -702,7 +667,7 @@ class TestDiagnoseLinop:
 
         L = N.to_linop()
 
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             has_issues = diagnose_linop(L, verbose=False)
 
@@ -741,7 +706,7 @@ class TestDiagnoseLinop:
 
 
 class TestEdgeCases:
-    """Additional edge case tests for comprehensive coverage."""
+    """Test edge cases for linop diagnostics."""
 
     def test_check_singularities_multiple_warnings(self):
         """Test that multiple issues generate multiple warnings."""
@@ -750,9 +715,7 @@ class TestEdgeCases:
         coeffs = [None, None, a2]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain, tol=1e-8
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain, tol=1e-8)
 
         assert has_issues
         # Should have warnings for both vanishing and sign change
@@ -765,9 +728,7 @@ class TestEdgeCases:
         coeffs = [None, None, a2]
         domain = Domain([-1, 1])
 
-        has_issues, warnings_list = check_coefficient_singularities(
-            coeffs, diff_order=2, domain=domain, tol=1e-8
-        )
+        has_issues, warnings_list = check_coefficient_singularities(coeffs, diff_order=2, domain=domain, tol=1e-8)
 
         assert has_issues
         assert len(warnings_list) > 0
@@ -801,13 +762,9 @@ class TestEdgeCases:
         coeffs = [a0]
         domain = Domain([-1, 1])
 
-        _, _, n_low = check_coefficient_oscillation(
-            coeffs, diff_order=1, domain=domain, min_points_per_wavelength=5
-        )
+        _, _, n_low = check_coefficient_oscillation(coeffs, diff_order=1, domain=domain, min_points_per_wavelength=5)
 
-        _, _, n_high = check_coefficient_oscillation(
-            coeffs, diff_order=1, domain=domain, min_points_per_wavelength=20
-        )
+        _, _, n_high = check_coefficient_oscillation(coeffs, diff_order=1, domain=domain, min_points_per_wavelength=20)
 
         # Higher points per wavelength should give higher suggestion
         if n_low is not None and n_high is not None:
@@ -846,7 +803,6 @@ class TestEdgeCases:
         # Missing rbc - underdetermined
 
         # Manually create LinOp with explicit vanishing coefficient
-        from chebpy.utilities import Domain
 
         domain = Domain([-1, 1])
         a2 = chebfun(lambda x: np.zeros_like(x), [-1, 1])

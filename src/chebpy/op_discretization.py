@@ -837,7 +837,7 @@ class OpDiscretization:
                 # Apply weight function if specified
                 if weight_fun is not None:
                     g_vals = weight_fun(x_pts)
-                    # Ensure g_vals is 1D (MATLAB Chebfun returns column vectors)
+                    # Ensure g_vals is 1D
                     g_vals = np.atleast_1d(g_vals).ravel()
                     weights = weights * g_vals
 

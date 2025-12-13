@@ -107,7 +107,7 @@ def pwc(domain=[-1, 0, 1], values=[0, 1]):
     return Chebfun(funs)
 
 
-def chebop(*args, **kwargs):
+def chebop(domain=None, op=None, lbc=None, rbc=None, bc=None, rhs=None, init=None, **kwargs):
     """Create a Chebop (differential operator) object.
 
     A Chebop represents a linear or nonlinear differential operator with
@@ -115,27 +115,75 @@ def chebop(*args, **kwargs):
     and eigenvalue problems.
 
     Args:
-        *args: Positional arguments for domain specification. Can be:
-            - Single argument: domain as [a, b] or Domain object
-            - Two arguments: either (a, b) for domain endpoints,
-              or (op, domain) / (domain, op) for operator and domain
-        **kwargs: Keyword arguments including:
-            domain: Domain specification (can also be passed as keyword arg)
-            op: Operator function taking (x, u, u', u'', ...)
-            lbc: Left boundary condition function
-            rbc: Right boundary condition function
-            bc: List of boundary conditions
-            rhs: Right-hand side function f(x) for Chebop @ u = rhs
-            init: Initial guess for nonlinear problems
-            point_constraints: Point constraints for specific locations
+        domain: Domain specification. Can be:
+            - [a, b]: interval endpoints as a list/tuple
+            - Domain object
+            - Defaults to [-1, 1] if not specified
+        op: Operator function defining the differential equation.
+            For linear: lambda x, u: u.diff(2) + u
+            For nonlinear: lambda x, u: u.diff(2) + u**2
+        lbc: Left boundary condition. Can be:
+            - callable: lambda u: u - value (Dirichlet)
+            - callable: lambda u: u.diff() - value (Neumann)
+            - numeric: shorthand for Dirichlet condition u(a) = value
+        rbc: Right boundary condition (same format as lbc)
+        bc: General boundary conditions as a list, or 'periodic' for periodic BCs
+        rhs: Right-hand side function f(x) for the equation N[u] = f
+        init: Initial guess for nonlinear problems (Chebfun or callable)
+        **kwargs: Additional options passed to Chebop constructor
 
     Returns:
         Chebop: A differential operator object.
 
     Examples:
-        >>> # Create operator on [-1, 1] with no BCs
-        >>> N = chebop([-1, 1])
+        >>> # Simple Poisson equation: u'' = -1, u(-1) = u(1) = 0
+        >>> N = chebop([-1, 1], op=lambda x, u: u.diff(2), lbc=0, rbc=0)
+        >>> isinstance(N, Chebop)
+        True
+
+        >>> # Harmonic oscillator: u'' + u = 0
+        >>> N = chebop([-1, 1], op=lambda x, u: u.diff(2) + u)
         >>> isinstance(N, Chebop)
         True
     """
-    return Chebop(*args, **kwargs)
+    # Handle case where domain is passed as two separate scalars: chebop(a, b)
+    # In this case, domain=a and op=b (both scalars, not callable)
+    if (
+        domain is not None
+        and op is not None
+        and not callable(op)
+        and isinstance(domain, (int, float))
+        and isinstance(op, (int, float))
+    ):
+        domain = [domain, op]
+        op = None
+
+    # Handle case where op is passed as first arg and domain as second: chebop(op, domain)
+    # In this case, domain=callable and op=list/tuple
+    if callable(domain) and isinstance(op, (list, tuple)):
+        actual_op = domain
+        actual_domain = op
+        domain = actual_domain
+        op = actual_op
+
+    # Build positional args for Chebop constructor
+    args = []
+    if domain is not None:
+        args.append(domain)
+
+    # Build kwargs
+    all_kwargs = dict(kwargs)
+    if op is not None:
+        all_kwargs["op"] = op
+    if lbc is not None:
+        all_kwargs["lbc"] = lbc
+    if rbc is not None:
+        all_kwargs["rbc"] = rbc
+    if bc is not None:
+        all_kwargs["bc"] = bc
+    if rhs is not None:
+        all_kwargs["rhs"] = rhs
+    if init is not None:
+        all_kwargs["init"] = init
+
+    return Chebop(*args, **all_kwargs)

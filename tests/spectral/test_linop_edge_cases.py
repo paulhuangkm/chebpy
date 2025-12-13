@@ -1,6 +1,6 @@
-"""Comprehensive tests for LinOp to achieve >90% coverage.
+"""Tests for LinOp edge cases.
 
-This test file targets untested code paths including:
+This test file includes:
 1. Eigenvalue computation edge cases (spurious eigenvalues, rectangular discretization,
    generalized eigenvalue problems, sparse solver paths)
 2. Matrix exponential (expm) method
@@ -13,6 +13,7 @@ import warnings
 
 import numpy as np
 import pytest
+from scipy import sparse
 
 from chebpy import chebfun
 from chebpy.linop import LinOp
@@ -20,7 +21,7 @@ from chebpy.utilities import Domain
 
 
 class TestEigenvalueEdgeCases:
-    """Test eigenvalue computation edge cases for coverage."""
+    """Test eigenvalue computation edge cases."""
 
     def test_eigs_rectangular_discretization(self):
         """Test eigenvalues with rectangular (overdetermined) discretization."""
@@ -105,9 +106,12 @@ class TestEigenvalueEdgeCases:
         assert len(eigenvalues) >= 2
         assert len(eigenfunctions) >= 2
 
-    @pytest.mark.skip(reason="Sparse eigenvalue solver hangs indefinitely")
     def test_eigs_sparse_solver_path(self):
-        """Test sparse solver path for large eigenvalue problems."""
+        """Test sparse solver path for large eigenvalue problems.
+
+        Uses a fixed discretization size to test the sparse code path
+        without the expensive adaptive convergence loop.
+        """
         domain = Domain([0, 1])
 
         # Create a problem that will use sparse solver (>500 DOFs)
@@ -124,13 +128,20 @@ class TestEigenvalueEdgeCases:
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         # Force large discretization to trigger sparse path
+        # Set both min_n and max_n to skip the adaptive loop
         L.min_n = 512
-        L.n_current = 512
+        L.max_n = 512
 
         eigenvalues, eigenfunctions = L.eigs(k=3)
 
         assert len(eigenvalues) >= 3
         assert all(np.isfinite(eigenvalues))
+
+        # Check eigenvalues are approximately correct: (nπ)^2 for n=1,2,3
+        expected = np.array([(n * np.pi) ** 2 for n in range(1, 4)])
+        for i in range(3):
+            rel_err = abs(eigenvalues[i] - expected[i]) / expected[i]
+            assert rel_err < 1e-6, f"Eigenvalue {i}: {eigenvalues[i]} vs {expected[i]}"
 
     def test_eigs_with_shift_invert_generalized(self):
         """Test shift-invert mode with generalized eigenvalue problem."""
@@ -196,7 +207,7 @@ class TestEigenvalueEdgeCases:
         L.max_n = 32
 
         # Should warn about spurious eigenvalues
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             eigenvalues, eigenfunctions = L.eigs(k=3)
 
@@ -305,7 +316,7 @@ class TestMatrixExponential:
         u0 = chebfun(lambda x: np.sin(x) + 0.5 * np.sin(5 * x) + 0.3 * np.sin(10 * x), [0, np.pi])
 
         # Use very few eigenfunctions - should warn
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             u_t = L.expm(t=0.01, u0=u0, num_eigs=3)
 
@@ -400,7 +411,7 @@ class TestConvergenceChecking:
         L.tol = 1e-12
 
         # Should warn about reaching max_n
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             u = L.solve()
 
@@ -615,8 +626,6 @@ class TestAssembleConstraintRows:
 
     def test_assemble_multiple_constraints(self):
         """Test assembling multiple constraint rows."""
-        from scipy import sparse
-
         # Create some constraint rows
         row1 = sparse.csr_matrix(np.array([[1, 0, 0, 0]]))
         row2 = sparse.csr_matrix(np.array([[0, 1, 0, 0]]))
@@ -802,7 +811,7 @@ class TestCoefficientsValidation:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
 
-            L = LinOp(coeffs=[chebfun(lambda x: 1 + 0 * x, [-1, 1])], domain=domain, diff_order=2)
+            LinOp(coeffs=[chebfun(lambda x: 1 + 0 * x, [-1, 1])], domain=domain, diff_order=2)
 
             # Should warn about coefficient mismatch
             assert any("Coefficient list length" in str(warning.message) for warning in w)

@@ -19,8 +19,8 @@ class TestAdjointBasics:
         domain = Domain([0, 1])
 
         # L = d/dx
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
 
         # L* should be -d/dx
@@ -39,9 +39,9 @@ class TestAdjointBasics:
         domain = Domain([0, 1])
 
         # L = d²/dx²
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
         # L* should be d²/dx² (even order derivative)
@@ -56,7 +56,7 @@ class TestAdjointBasics:
         domain = Domain([0, 1])
 
         # L = x * d/dx
-        a0 = chebfun(lambda x: 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
         a1 = chebfun(lambda x: x, [0, 1])
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
 
@@ -74,9 +74,9 @@ class TestAdjointBasics:
         domain = Domain([0, 1])
 
         # L = d²/dx² + x*d/dx + 1
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         a1 = chebfun(lambda x: x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
         # (L*)*
@@ -98,14 +98,14 @@ class TestAdjointInnerProduct:
         domain = Domain([0, 1])
 
         # L = d/dx
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
         L_adj = L.adjoint()
 
         # Test functions with zero boundary conditions
-        u = chebfun(lambda x: np.sin(np.pi*x), [0, 1])
-        v = chebfun(lambda x: np.sin(2*np.pi*x), [0, 1])
+        u = chebfun(lambda x: np.sin(np.pi * x), [0, 1])
+        v = chebfun(lambda x: np.sin(2 * np.pi * x), [0, 1])
 
         # Apply operators using __call__
         Lu = L(u)
@@ -128,9 +128,9 @@ class TestAdjointInnerProduct:
         domain = Domain([0, 1])
 
         # L = -d²/dx²
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
         # For -d²/dx², the adjoint is also -d²/dx²
@@ -150,14 +150,14 @@ class TestAdjointAlgebra:
         domain = Domain([0, 1])
 
         # L1 = d/dx
-        a0_1 = chebfun(lambda x: 0*x, [0, 1])
-        a1_1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0_1 = chebfun(lambda x: 0 * x, [0, 1])
+        a1_1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L1 = LinOp(coeffs=[a0_1, a1_1], domain=domain, diff_order=1)
 
         # L2 = d²/dx²
-        a0_2 = chebfun(lambda x: 0*x, [0, 1])
-        a1_2 = chebfun(lambda x: 0*x, [0, 1])
-        a2_2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0_2 = chebfun(lambda x: 0 * x, [0, 1])
+        a1_2 = chebfun(lambda x: 0 * x, [0, 1])
+        a2_2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L2 = LinOp(coeffs=[a0_2, a1_2, a2_2], domain=domain, diff_order=2)
 
         # (L1 + L2)*
@@ -177,8 +177,8 @@ class TestAdjointAlgebra:
         domain = Domain([0, 1])
 
         # L = d/dx
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
 
         c = 3.0
@@ -200,9 +200,9 @@ class TestAdjointAlgebra:
         domain = Domain([0, 1])
 
         # L = d²/dx²
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
         # (-L)*
@@ -226,9 +226,9 @@ class TestAdjointApplications:
         domain = Domain([0, 1])
 
         # L = -d²/dx²
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
         # L* should equal L
@@ -244,8 +244,8 @@ class TestAdjointApplications:
         domain = Domain([0, 1])
 
         # L = d/dx
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
 
         # L* = -d/dx ≠ L
@@ -295,10 +295,10 @@ class TestAdjointHigherOrder:
         domain = Domain([0, 1])
 
         # L = d³/dx³
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 0*x, [0, 1])
-        a3 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 0 * x, [0, 1])
+        a3 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2, a3], domain=domain, diff_order=3)
 
         # L* = -d³/dx³ (odd order)
@@ -313,11 +313,11 @@ class TestAdjointHigherOrder:
         domain = Domain([0, 1])
 
         # L = d⁴/dx⁴
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 0*x, [0, 1])
-        a3 = chebfun(lambda x: 0*x, [0, 1])
-        a4 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 0 * x, [0, 1])
+        a3 = chebfun(lambda x: 0 * x, [0, 1])
+        a4 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2, a3, a4], domain=domain, diff_order=4)
 
         # L* = d⁴/dx⁴ (even order)

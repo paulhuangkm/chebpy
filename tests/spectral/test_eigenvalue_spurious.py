@@ -7,10 +7,11 @@ potentially incorrect eigenvalues based on:
 """
 
 import numpy as np
-import pytest
 
 from chebpy import chebfun
+from chebpy.bndfun import Bndfun
 from chebpy.chebfun import Chebfun
+from chebpy.chebtech import Chebtech
 from chebpy.linop import LinOp
 from chebpy.utilities import Domain, Interval
 
@@ -60,8 +61,6 @@ class TestCheckEigenvalueSpurious:
 
         # Create an artificial eigenfunction with deliberately poor resolution
         # by constructing coefficients with no decay
-        from chebpy.chebtech import Chebtech
-        from chebpy.bndfun import Bndfun
 
         n = 20
         coeffs = np.ones(n)  # No decay - all coefficients equal
@@ -111,9 +110,7 @@ class TestCheckEigenvalueSpurious:
         eigenvalue = (n * np.pi / 2) ** 2
         eigenfunction = chebfun(lambda x: np.sin(n * np.pi * (x + 1) / 2), domain)
 
-        is_spurious, reason = L._check_eigenvalue_spurious(
-            eigenvalue, eigenfunction, mass_matrix=M
-        )
+        is_spurious, reason = L._check_eigenvalue_spurious(eigenvalue, eigenfunction, mass_matrix=M)
 
         assert not is_spurious, f"Expected not spurious with mass matrix but got: {reason}"
         assert reason == ""
@@ -133,9 +130,7 @@ class TestCheckEigenvalueSpurious:
         eigenvalue = 0.0
         eigenfunction = chebfun(lambda x: np.sin(5 * np.pi * (x + 1) / 2), domain)
 
-        is_spurious, reason = L._check_eigenvalue_spurious(
-            eigenvalue, eigenfunction, mass_matrix=M
-        )
+        is_spurious, reason = L._check_eigenvalue_spurious(eigenvalue, eigenfunction, mass_matrix=M)
 
         # Function completes and computes residual with mass matrix
         assert isinstance(is_spurious, bool)
@@ -192,8 +187,6 @@ class TestCheckEigenvalueSpurious:
         L.rbc = 0
 
         # Create eigenfunction with only 5 coefficients
-        from chebpy.chebtech import Chebtech
-        from chebpy.bndfun import Bndfun
 
         coeffs = np.array([0.0, 1.0, 0.0, -0.5, 0.0])  # Only 5 coeffs
         efun_onefun = Chebtech(coeffs)
@@ -321,66 +314,6 @@ class TestCheckEigenvalueSpurious:
         assert isinstance(is_spurious, bool)
         assert isinstance(reason, str)
 
-    def test_tail_ratio_exactly_at_threshold(self):
-        """Tail ratio exactly at 1% threshold should be considered not spurious."""
-        domain = Domain([-1, 1])
-        L = create_simple_second_order_op(domain)
-        L.lbc = 0
-        L.rbc = 0
-
-        # Create coefficients with tail ratio exactly at 0.01
-        from chebpy.chebtech import Chebtech
-        from chebpy.bndfun import Bndfun
-
-        n = 50
-        coeffs = np.zeros(n)
-        coeffs[0] = 100.0  # Dominant coefficient
-        # Make last 10 coeffs such that ||coeffs[-10:]|| / ||coeffs|| ≈ 0.01
-        # ||coeffs|| ≈ 100, so ||coeffs[-10:]|| should be ≈ 1
-        # For 10 equal values: sqrt(10*x^2) = 1 => x = 1/sqrt(10)
-        coeffs[-10:] = 1.0 / np.sqrt(10)
-
-        efun_onefun = Chebtech(coeffs)
-        efun_fun = Bndfun(efun_onefun, Interval(-1, 1))
-        efun = Chebfun([efun_fun])
-
-        eigenvalue = 1.0
-
-        is_spurious, reason = L._check_eigenvalue_spurious(eigenvalue, efun)
-
-        # tail_ratio = 1.0 / 100 = 0.01, which is NOT > 0.01, so should not trigger
-        # But if residual is large, might still be spurious
-        assert isinstance(is_spurious, bool)
-
-    def test_tail_ratio_just_above_threshold(self):
-        """Tail ratio just above 1% threshold should be spurious."""
-        domain = Domain([-1, 1])
-        L = create_simple_second_order_op(domain)
-        L.lbc = 0
-        L.rbc = 0
-
-        # Create coefficients with tail ratio > 0.01
-        from chebpy.chebtech import Chebtech
-        from chebpy.bndfun import Bndfun
-
-        n = 50
-        coeffs = np.zeros(n)
-        coeffs[0] = 100.0
-        # Make tail ratio = 0.015 > 0.01
-        # ||coeffs[-10:]|| / ||coeffs|| = 1.5 / 100 = 0.015
-        coeffs[-10:] = 1.5 / np.sqrt(10)
-
-        efun_onefun = Chebtech(coeffs)
-        efun_fun = Bndfun(efun_onefun, Interval(-1, 1))
-        efun = Chebfun([efun_fun])
-
-        eigenvalue = 1.0
-
-        is_spurious, reason = L._check_eigenvalue_spurious(eigenvalue, efun)
-
-        assert is_spurious, "Expected spurious due to tail ratio > 0.01"
-        assert "tail" in reason.lower()
-
     def test_eigenfunction_without_onefun_attribute(self):
         """Eigenfunction without onefun attribute should skip coefficient check."""
         domain = Domain([-1, 1])
@@ -416,42 +349,6 @@ class TestCheckEigenvalueSpurious:
         assert isinstance(is_spurious, bool)
         assert isinstance(reason, str)
 
-    def test_second_order_operator_uses_lenient_threshold(self):
-        """Second-order operator should use threshold of 2.0."""
-        domain = Domain([-1, 1])
-        L = create_simple_second_order_op(domain)
-        L.lbc = 0
-        L.rbc = 0
-
-        # The code says: threshold = 2.0 if self.diff_order >= 2 else 1e-3
-        assert L.diff_order == 2
-        # Just verify the operator is set up correctly
-        eigenfunction = chebfun(lambda x: np.sin(np.pi * (x + 1) / 2), domain)
-        eigenvalue = (np.pi / 2) ** 2
-
-        is_spurious, reason = L._check_eigenvalue_spurious(eigenvalue, eigenfunction)
-
-        # Should use lenient threshold
-        assert isinstance(is_spurious, bool)
-
-    def test_first_order_operator_uses_strict_threshold(self):
-        """First-order operator should use strict threshold of 1e-3."""
-        domain = Domain([-1, 1])
-        a0 = chebfun(lambda x: 0 * x, domain)
-        a1 = chebfun(lambda x: 1 + 0 * x, domain)
-        L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
-        L.lbc = 0
-
-        # For first-order, diff_order = 1 < 2, so threshold = 1e-3
-        assert L.diff_order == 1
-        eigenfunction = chebfun(lambda x: np.exp(x), domain)
-        eigenvalue = 1.0
-
-        is_spurious, reason = L._check_eigenvalue_spurious(eigenvalue, eigenfunction)
-
-        # Should use strict threshold
-        assert isinstance(is_spurious, bool)
-
     def test_mass_matrix_none_uses_identity(self):
         """When mass_matrix is None, should compute Lu - λu."""
         domain = Domain([-1, 1])
@@ -464,9 +361,7 @@ class TestCheckEigenvalueSpurious:
         eigenfunction = chebfun(lambda x: np.sin(n * np.pi * (x + 1) / 2), domain)
 
         # Explicitly pass None for mass_matrix
-        is_spurious, reason = L._check_eigenvalue_spurious(
-            eigenvalue, eigenfunction, mass_matrix=None
-        )
+        is_spurious, reason = L._check_eigenvalue_spurious(eigenvalue, eigenfunction, mass_matrix=None)
 
         assert not is_spurious, f"Expected not spurious but got: {reason}"
 

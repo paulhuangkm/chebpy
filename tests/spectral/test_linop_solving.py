@@ -1,30 +1,33 @@
 """Tests for LinOp solving functions: solve_linear_system, solve, and _build_discretization_from_jacobian.
 
-This test suite focuses on improving coverage for:
+This test suite includes tests for:
 1. solve_linear_system - different matrix types, sizes, solvers
 2. solve - adaptive refinement, convergence checks, BC satisfaction
 3. _build_discretization_from_jacobian - AdChebfun path for nonlinear problems
 """
 
+import warnings
+
 import numpy as np
 import pytest
-import warnings
 from scipy import sparse
 
 from chebpy import chebfun
 from chebpy.linop import LinOp
+from chebpy.op_discretization import OpDiscretization
+from chebpy.trigtech import Trigtech
 from chebpy.utilities import Domain
 
 
 class TestSolveLinearSystem:
-    """Tests for LinOp.solve_linear_system covering different solver paths."""
+    """Tests for LinOp.solve_linear_system with different solver paths."""
 
     def test_square_system_lu_solver(self):
         """Test LU decomposition for square systems."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -32,8 +35,8 @@ class TestSolveLinearSystem:
 
         # Get a square system
         L.prepare_domain()
-        from chebpy.op_discretization import OpDiscretization
-        disc = OpDiscretization.build_discretization(L, 16, bc_enforcement='replace')
+
+        disc = OpDiscretization.build_discretization(L, 16, bc_enforcement="replace")
         A, b = L.assemble_system(disc)
 
         # Should be square or overdetermined
@@ -51,8 +54,8 @@ class TestSolveLinearSystem:
         """Test direct lstsq for small overdetermined systems (n < 1000)."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -63,7 +66,7 @@ class TestSolveLinearSystem:
         m = 60  # More equations than unknowns
 
         # Create a simple overdetermined sparse system
-        A = sparse.random(m, n, density=0.1, format='csr')
+        A = sparse.random(m, n, density=0.1, format="csr")
         b = np.random.rand(m)
 
         # Should use direct lstsq (n < 1000)
@@ -76,8 +79,8 @@ class TestSolveLinearSystem:
         """Test iterative LSMR for large overdetermined systems (n >= 1000)."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -88,7 +91,7 @@ class TestSolveLinearSystem:
         m = 1500
 
         # Create sparse matrix to avoid memory issues
-        A = sparse.random(m, n, density=0.001, format='csr')
+        A = sparse.random(m, n, density=0.001, format="csr")
         b = np.random.rand(m)
 
         # Should use LSMR (n >= 1000)
@@ -101,8 +104,8 @@ class TestSolveLinearSystem:
         """Test warning when LSMR doesn't converge well."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -112,13 +115,13 @@ class TestSolveLinearSystem:
         # Create a moderately ill-conditioned large system
         n = 1200
         m = 1500
-        A = sparse.random(m, n, density=0.001, format='csr')
+        A = sparse.random(m, n, density=0.001, format="csr")
         # Make it poorly scaled
-        A = A + sparse.eye(m, n, format='csr') * 1e-10
+        A = A + sparse.eye(m, n, format="csr") * 1e-10
         b = np.random.rand(m)
 
         # May produce convergence warning due to tight tolerance
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             u = L.solve_linear_system(A, b)
 
@@ -129,8 +132,8 @@ class TestSolveLinearSystem:
         """Test that row scaling improves accuracy for square systems."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -138,7 +141,7 @@ class TestSolveLinearSystem:
 
         # Create a poorly scaled square system
         n = 50
-        A = sparse.random(n, n, density=0.2, format='csr').toarray()
+        A = sparse.random(n, n, density=0.2, format="csr").toarray()
         # Make some rows much larger
         A[0, :] *= 1e6
         A[-1, :] *= 1e-6
@@ -157,8 +160,8 @@ class TestSolveLinearSystem:
         """Test warning for rank-deficient systems."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -175,7 +178,7 @@ class TestSolveLinearSystem:
         A_sparse = sparse.csr_matrix(A)
 
         # Should warn about rank deficiency
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             u = L.solve_linear_system(A_sparse, b)
 
@@ -185,10 +188,10 @@ class TestSolveLinearSystem:
 
     def test_periodic_system_no_rank_warning(self):
         """Test that periodic systems suppress rank deficiency warning."""
-        domain = Domain([0, 2*np.pi])
+        domain = Domain([0, 2 * np.pi])
 
-        a0 = chebfun(lambda x: 0*x, [0, 2*np.pi])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 2*np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, 2 * np.pi])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 2 * np.pi])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.bc = "periodic"
@@ -205,7 +208,7 @@ class TestSolveLinearSystem:
         # Should NOT warn for periodic case
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            u = L.solve_linear_system(A_sparse, b)
+            L.solve_linear_system(A_sparse, b)
 
             # Should not warn about rank deficiency for periodic
             rank_warnings = [warning for warning in w if "rank deficient" in str(warning.message).lower()]
@@ -215,7 +218,7 @@ class TestSolveLinearSystem:
         """Test fallback to lstsq when LU decomposition fails."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0], domain=domain, diff_order=0)
 
@@ -235,14 +238,14 @@ class TestSolveLinearSystem:
 
 
 class TestSolve:
-    """Tests for LinOp.solve covering adaptive refinement and convergence."""
+    """Tests for LinOp.solve with adaptive refinement and convergence."""
 
     def test_solve_with_explicit_n(self):
         """Test solve with explicit discretization size."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         rhs = chebfun(lambda x: np.sin(np.pi * x), [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2, rhs=rhs)
@@ -262,8 +265,8 @@ class TestSolve:
         domain = Domain([0, 1])
 
         # First-order operator (should use append mode)
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         rhs = chebfun(lambda x: np.exp(x), [0, 1])
 
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1, rhs=rhs)
@@ -280,8 +283,8 @@ class TestSolve:
         domain = Domain([0, 1])
 
         # Fourth-order operator (should use replace mode)
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a4 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a4 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         rhs = chebfun(lambda x: x**2, [0, 1])
 
         L = LinOp(coeffs=[a0, None, None, None, a4], domain=domain, diff_order=4, rhs=rhs)
@@ -298,8 +301,8 @@ class TestSolve:
         domain = Domain([-1, 1])
 
         # Very smooth problem
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
         rhs = chebfun(lambda x: np.cos(np.pi * x), [-1, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2, rhs=rhs)
@@ -317,8 +320,8 @@ class TestSolve:
         """Test BC satisfaction check when BCs are well satisfied."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         rhs = chebfun(lambda x: np.sin(np.pi * x), [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2, rhs=rhs)
@@ -336,8 +339,8 @@ class TestSolve:
         domain = Domain([0, 1])
 
         # Problem with oscillatory coefficients
-        a0 = chebfun(lambda x: np.sin(10*x), [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: np.sin(10 * x), [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         rhs = chebfun(lambda x: x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2, rhs=rhs)
@@ -356,7 +359,7 @@ class TestSolve:
         """Test residual-based acceptance for good residuals."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         rhs = chebfun(lambda x: np.exp(x), [0, 1])
 
         # Algebraic equation (diff_order=0)
@@ -371,8 +374,8 @@ class TestSolve:
         """Test acceptance at max_n for algebraic equations."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        rhs = chebfun(lambda x: np.sin(20*x), [0, 1])  # Oscillatory
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        rhs = chebfun(lambda x: np.sin(20 * x), [0, 1])  # Oscillatory
 
         L = LinOp(coeffs=[a0], domain=domain, diff_order=0, rhs=rhs)
         L.max_n = 32  # Small max_n
@@ -386,8 +389,8 @@ class TestSolve:
         """Test warning at max_n with non-smooth RHS."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         # Non-smooth RHS
         rhs = chebfun(lambda x: np.sign(x - 0.5), [0, 0.5, 1])
@@ -397,7 +400,7 @@ class TestSolve:
         L.rbc = 0
         L.max_n = 32
 
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             u = L.solve()
 
@@ -406,11 +409,11 @@ class TestSolve:
 
     def test_solve_periodic_skip_simplify(self):
         """Test that periodic solutions skip simplify."""
-        domain = Domain([0, 2*np.pi])
+        domain = Domain([0, 2 * np.pi])
 
-        a0 = chebfun(lambda x: 0*x, [0, 2*np.pi])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 2*np.pi])
-        rhs = chebfun(lambda x: np.sin(3*x), [0, 2*np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, 2 * np.pi])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 2 * np.pi])
+        rhs = chebfun(lambda x: np.sin(3 * x), [0, 2 * np.pi])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2, rhs=rhs)
         L.bc = "periodic"
@@ -418,15 +421,15 @@ class TestSolve:
         u = L.solve()
 
         # Check periodic BCs
-        u_vals = u(np.array([0.0, 2*np.pi]))
+        u_vals = u(np.array([0.0, 2 * np.pi]))
         assert abs(u_vals[0] - u_vals[1]) < 1e-8
 
     def test_solve_with_rhs_parameter(self):
         """Test passing RHS as parameter to solve."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -444,8 +447,8 @@ class TestSolve:
         domain = Domain([0, 1])
 
         # Create a difficult problem (zero operator, nonzero RHS, no BCs)
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        rhs = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        rhs = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0], domain=domain, diff_order=0, rhs=rhs)
         # No BCs to constrain the problem
@@ -454,7 +457,7 @@ class TestSolve:
         L.max_n = 16
 
         # Even for poorly posed problems, solve returns a solution with warning
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             u = L.solve()
 
@@ -463,11 +466,11 @@ class TestSolve:
 
     def test_solve_uses_trigtech_for_periodic(self):
         """Test that periodic problems use Trigtech reconstruction."""
-        domain = Domain([0, 2*np.pi])
+        domain = Domain([0, 2 * np.pi])
 
-        a0 = chebfun(lambda x: 0*x, [0, 2*np.pi])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 2*np.pi])
-        rhs = chebfun(lambda x: np.cos(5*x), [0, 2*np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, 2 * np.pi])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 2 * np.pi])
+        rhs = chebfun(lambda x: np.cos(5 * x), [0, 2 * np.pi])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2, rhs=rhs)
         L.bc = "periodic"
@@ -475,7 +478,7 @@ class TestSolve:
         u = L.solve(n=32)
 
         # Check that solution uses Trigtech
-        from chebpy.trigtech import Trigtech
+
         assert any(isinstance(fun.onefun, Trigtech) for fun in u.funs)
 
 
@@ -488,8 +491,8 @@ class TestBuildDiscretizationFromJacobian:
         # We'll create a mock scenario
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -500,7 +503,7 @@ class TestBuildDiscretizationFromJacobian:
         def mock_jacobian(n):
             size = n + 1
             # Return a simple sparse matrix
-            return sparse.eye(size, format='csr')
+            return sparse.eye(size, format="csr")
 
         L._jacobian_computer = mock_jacobian
         L.rhs = chebfun(lambda x: x, [0, 1])
@@ -508,17 +511,17 @@ class TestBuildDiscretizationFromJacobian:
         # Should build discretization from Jacobian
         disc = L._build_discretization_from_jacobian(16)
 
-        assert 'blocks' in disc
-        assert 'bc_rows' in disc
-        assert 'rhs_blocks' in disc
-        assert len(disc['blocks']) == 1
+        assert "blocks" in disc
+        assert "bc_rows" in disc
+        assert "rhs_blocks" in disc
+        assert len(disc["blocks"]) == 1
 
     def test_jacobian_path_multi_interval_raises(self):
         """Test that multi-interval raises NotImplementedError."""
         domain = Domain([0, 0.5, 1])  # Two intervals
 
-        a0 = chebfun(lambda x: 0*x, [0, 0.5, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 0.5, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 0.5, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 0.5, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -526,18 +529,18 @@ class TestBuildDiscretizationFromJacobian:
         L.prepare_domain()
 
         # Mock Jacobian computer
-        L._jacobian_computer = lambda n: sparse.eye(n+1, format='csr')
+        L._jacobian_computer = lambda n: sparse.eye(n + 1, format="csr")
 
         # Should raise NotImplementedError for multi-interval
         with pytest.raises(NotImplementedError, match="multi-interval"):
-            disc = L._build_discretization_from_jacobian(16)
+            L._build_discretization_from_jacobian(16)
 
     def test_jacobian_path_non_square_matrix_raises(self):
         """Test that non-square Jacobian raises error."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -546,19 +549,19 @@ class TestBuildDiscretizationFromJacobian:
 
         # Mock a non-square Jacobian
         def bad_jacobian(n):
-            return sparse.eye(n+1, n, format='csr')  # Not square
+            return sparse.eye(n + 1, n, format="csr")  # Not square
 
         L._jacobian_computer = bad_jacobian
 
         with pytest.raises(ValueError, match="not square"):
-            disc = L._build_discretization_from_jacobian(16)
+            L._build_discretization_from_jacobian(16)
 
     def test_jacobian_path_with_residual_evaluator(self):
         """Test Jacobian path with residual evaluator."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -566,22 +569,22 @@ class TestBuildDiscretizationFromJacobian:
         L.prepare_domain()
 
         # Mock Jacobian and residual evaluator
-        L._jacobian_computer = lambda n: sparse.eye(n+1, format='csr')
+        L._jacobian_computer = lambda n: sparse.eye(n + 1, format="csr")
         L._residual_evaluator = lambda x: np.sin(np.pi * x)
 
         disc = L._build_discretization_from_jacobian(16)
 
         # Should use residual evaluator for RHS
-        assert 'rhs_blocks' in disc
-        assert len(disc['rhs_blocks']) == 1
-        assert len(disc['rhs_blocks'][0]) == 17  # n+1 points
+        assert "rhs_blocks" in disc
+        assert len(disc["rhs_blocks"]) == 1
+        assert len(disc["rhs_blocks"][0]) == 17  # n+1 points
 
     def test_jacobian_path_with_zero_rhs(self):
         """Test Jacobian path with zero RHS."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -590,20 +593,20 @@ class TestBuildDiscretizationFromJacobian:
         L.rhs = None  # No RHS
 
         # Mock Jacobian
-        L._jacobian_computer = lambda n: sparse.eye(n+1, format='csr')
+        L._jacobian_computer = lambda n: sparse.eye(n + 1, format="csr")
 
         disc = L._build_discretization_from_jacobian(16)
 
         # Should create zero RHS
-        assert 'rhs_blocks' in disc
-        assert np.allclose(disc['rhs_blocks'][0], 0)
+        assert "rhs_blocks" in disc
+        assert np.allclose(disc["rhs_blocks"][0], 0)
 
     def test_jacobian_path_converts_dense_to_sparse(self):
         """Test that dense Jacobian is converted to sparse."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
@@ -621,7 +624,7 @@ class TestBuildDiscretizationFromJacobian:
         disc = L._build_discretization_from_jacobian(16)
 
         # Should convert to sparse
-        assert sparse.issparse(disc['blocks'][0])
+        assert sparse.issparse(disc["blocks"][0])
 
 
 class TestAssembleSystem:
@@ -631,16 +634,15 @@ class TestAssembleSystem:
         """Test append mode (default) for BC enforcement."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
         L.rbc = 0
         L.prepare_domain()
 
-        from chebpy.op_discretization import OpDiscretization
-        disc = OpDiscretization.build_discretization(L, 16, bc_enforcement='append')
+        disc = OpDiscretization.build_discretization(L, 16, bc_enforcement="append")
 
         A, b = L.assemble_system(disc)
 
@@ -652,16 +654,15 @@ class TestAssembleSystem:
         """Test replace mode for BC enforcement."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         L = LinOp(coeffs=[a0, None, a2], domain=domain, diff_order=2)
         L.lbc = 0
         L.rbc = 0
         L.prepare_domain()
 
-        from chebpy.op_discretization import OpDiscretization
-        disc = OpDiscretization.build_discretization(L, 16, bc_enforcement='replace')
+        disc = OpDiscretization.build_discretization(L, 16, bc_enforcement="replace")
 
         A, b = L.assemble_system(disc)
 
@@ -673,8 +674,8 @@ class TestAssembleSystem:
         """Test that too many constraints raises error in replace mode."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         # First-order operator with too many BCs
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
@@ -682,12 +683,10 @@ class TestAssembleSystem:
         L.rbc = 0  # 2 BCs for 1st order
         L.prepare_domain()
 
-        from chebpy.op_discretization import OpDiscretization
-
         # Create discretization with replace mode
         # This may not raise during discretization, but during assembly
         try:
-            disc = OpDiscretization.build_discretization(L, 8, bc_enforcement='replace')
+            disc = OpDiscretization.build_discretization(L, 8, bc_enforcement="replace")
             A, b = L.assemble_system(disc)
             # If we get here, check that system is reasonable
             assert A.shape[0] > 0

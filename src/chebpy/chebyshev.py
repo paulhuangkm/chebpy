@@ -133,8 +133,12 @@ class ChebyshevPolynomial(cheb.Chebyshev):
 
         Returns:
             bool: True if the polynomial has no coefficients, False otherwise.
+
+        Note:
+            Due to NumPy's Chebyshev class constraints, this property will always
+            return False as empty coefficient arrays are not allowed.
         """
-        return self.size == 0
+        return self.size == 0  # pragma: no cover
 
     @property
     def isconst(self) -> bool:
@@ -166,7 +170,7 @@ class ChebyshevPolynomial(cheb.Chebyshev):
         Returns:
             float: The definite integral of the polynomial over its domain.
         """
-        if self.isempty:
+        if self.isempty:  # pragma: no cover
             return 0.0
 
         a, b = self.domain

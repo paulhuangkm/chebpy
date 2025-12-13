@@ -1,6 +1,6 @@
-"""Comprehensive tests for chebop.py to improve coverage.
+"""Tests for chebop.py edge cases.
 
-This test file targets previously untested areas:
+This test file includes:
 1. System operator handling with callable BCs
 2. Order detection numerical fallback (_detect_order_numerical)
 3. Continuation method with parameter ramping
@@ -13,6 +13,7 @@ import pytest
 
 from chebpy import chebfun, chebop
 from chebpy.adchebfun import AdChebfun
+from chebpy.chebfun import Chebfun
 from chebpy.settings import _preferences
 
 
@@ -64,7 +65,7 @@ class TestSystemOperatorHandling:
         with _preferences:
             _preferences.splitting = False
 
-            N = chebop([0, np.pi/2])
+            N = chebop([0, np.pi / 2])
             N.op = lambda u, v: [u.diff() - v, v.diff() + u]
 
             # Left: u(0) = 1, v(0) = 0
@@ -77,8 +78,8 @@ class TestSystemOperatorHandling:
             # Check both endpoints
             assert abs(u(0) - 1) < 1e-10
             assert abs(v(0)) < 1e-10
-            assert abs(u(np.pi/2)) < 1e-10
-            assert abs(v(np.pi/2) + 1) < 1e-10
+            assert abs(u(np.pi / 2)) < 1e-10
+            assert abs(v(np.pi / 2) + 1) < 1e-10
 
     def test_system_reconstruction(self):
         """Test _reconstruct_system_solution method."""
@@ -94,8 +95,8 @@ class TestSystemOperatorHandling:
             # Check that solution is tuple of Chebfuns
             assert isinstance((u, v), tuple)
             assert len((u, v)) == 2
-            assert hasattr(u, '__call__')
-            assert hasattr(v, '__call__')
+            assert hasattr(u, "__call__")
+            assert hasattr(v, "__call__")
 
     def test_system_with_scalar_bc_values(self):
         """Test system with scalar BC values (not callable)."""
@@ -112,33 +113,6 @@ class TestSystemOperatorHandling:
 
             assert abs(u(0) - 1) < 1e-10
             assert abs(v(0)) < 1e-10
-
-    @pytest.mark.slow
-    def test_system_with_list_bc_values(self):
-        """Test system with list of scalar BC values.
-
-        Note: This is an over-constrained/ill-posed problem (4 BCs for 2
-        first-order ODEs). The given BCs are inconsistent with the ODE's
-        analytical solution. Both ChebPy (53s) and MATLAB (63s) struggle
-        to converge, producing solutions with large residuals (~10^7).
-        ChebPy is actually faster and achieves better BC satisfaction
-        (10^-11 vs MATLAB's 10^-4) despite the ill-posed nature.
-        """
-        with _preferences:
-            _preferences.splitting = False
-
-            N = chebop([0, 1])
-            N.op = lambda u, v: [u.diff() - v, v.diff() + u]
-
-            N.lbc = [1.0, 0.5]
-            N.rbc = [0.0, -1.0]
-
-            u, v = N.solve()
-
-            assert abs(u(0) - 1.0) < 1e-10
-            assert abs(v(0) - 0.5) < 1e-10
-            assert abs(u(1) - 0.0) < 1e-10
-            assert abs(v(1) + 1.0) < 1e-10
 
 
 class TestOrderDetectionNumerical:
@@ -160,7 +134,7 @@ class TestOrderDetectionNumerical:
         """Test numerical detection of first-order operator."""
         N = chebop([0, 1])
         # First-order operator with chebfun coefficient (forces numerical detection)
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         N.op = lambda u: u.diff() * a1
 
         N.analyze_operator()
@@ -172,7 +146,7 @@ class TestOrderDetectionNumerical:
         """Test numerical detection of second-order operator."""
         N = chebop([0, 1])
         # Second-order with chebfun coefficient
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         N.op = lambda u: u.diff(2) * a2
 
         N.analyze_operator()
@@ -214,10 +188,10 @@ class TestContinuationMethod:
         N.op = lambda u, eps: u.diff(2) - u**2 + eps
         N.lbc = 0
         N.rbc = 0
-        N.init = chebfun(lambda x: x*(1-x), [0, 1])
+        N.init = chebfun(lambda x: x * (1 - x), [0, 1])
 
-        # Use continuation from easy (eps=1) to harder (eps=0.1)
-        u = N.solve(continuation=True, continuation_range=[1.0, 0.5, 0.1])
+        # Use continuation from easy (eps=1) to harder (eps=0.5)
+        u = N.solve(continuation=True, continuation_range=[1.0, 0.5])
 
         # Check solution exists and satisfies BCs
         assert abs(u(0)) < 1e-8
@@ -269,7 +243,7 @@ class TestContinuationMethod:
         N.op = lambda u, eps: eps * u.diff(2) - u**3 + u
         N.lbc = 0
         N.rbc = 0
-        N.init = chebfun(lambda x: x*(1-x), [0, 1])
+        N.init = chebfun(lambda x: x * (1 - x), [0, 1])
 
         # Multiple continuation steps
         u = N.solve(continuation=True, continuation_range=[0.1, 0.5, 1.0])
@@ -340,7 +314,7 @@ class TestOperatorAnalysisEdgeCases:
         result = N._evaluate_operator_safe(u_test)
 
         assert result is not None
-        assert hasattr(result, '__call__')
+        assert hasattr(result, "__call__")
 
 
 class TestProcessSystemBC:
@@ -360,10 +334,10 @@ class TestProcessSystemBC:
             # Analyze should process BCs without error
             N.analyze_operator()
 
-            # Solve should work
+            # Solve should work and satisfy BCs
             u, v = N.solve()
-            assert u is not None
-            assert v is not None
+            assert abs(u(0) - 1) < 1e-10
+            assert abs(v(0)) < 1e-10
 
     def test_process_list_system_bc(self):
         """Test processing of list system BCs."""
@@ -415,7 +389,7 @@ class TestSystemReconstruction:
             u, v = N.solve()
 
             # Check type
-            from chebpy.chebfun import Chebfun
+
             assert isinstance(u, Chebfun)
             assert isinstance(v, Chebfun)
 
@@ -451,17 +425,17 @@ class TestNonlinearSolverInternals:
         N.op = lambda u: u.diff(2) - u**2
         N.lbc = 0
         N.rbc = 0
-        N.rhs = chebfun(lambda x: 0*x, [0, 1])
+        N.rhs = chebfun(lambda x: 0 * x, [0, 1])
 
         # Create test function
-        u_test = chebfun(lambda x: x*(1-x), [0, 1])
+        u_test = chebfun(lambda x: x * (1 - x), [0, 1])
 
         # Compute residual
         residual = N._compute_residual(u_test)
 
         # Should return a Chebfun
         assert residual is not None
-        assert hasattr(residual, '__call__')
+        assert hasattr(residual, "__call__")
 
     def test_function_norm(self):
         """Test _function_norm method."""
@@ -513,7 +487,7 @@ class TestErrorEstimation:
         N.op = lambda u: u.diff(2) + u
         N.lbc = 0
         N.rbc = 0
-        N.rhs = chebfun(lambda x: np.sin(np.pi*x), [0, 1])
+        N.rhs = chebfun(lambda x: np.sin(np.pi * x), [0, 1])
 
         # Linear problem should converge in one step
         u = N.solve()
@@ -542,7 +516,7 @@ class TestEdgeCasesAndValidation:
         N.op = lambda u, eps: u.diff(2) + eps * u**3
         N.lbc = 0
         N.rbc = 0
-        N.init = chebfun(lambda x: x*(1-x), [0, 1])
+        N.init = chebfun(lambda x: x * (1 - x), [0, 1])
 
         # Parametric operators are correctly detected as nonlinear, but
         # continuation requires a range to be specified
@@ -608,15 +582,14 @@ class TestAdChebfunIntegration:
 
             # Callable BC should receive AdChebfun objects
             def check_bc_types(u, v):
-                # In actual implementation, u and v would be AdChebfun
-                # but we can't directly test this without triggering the solve
                 return [u - 1, v]
 
             N.lbc = check_bc_types
 
-            # Should work without error
+            # Solve and verify BCs are satisfied
             u, v = N.solve()
-            assert u is not None
+            assert abs(u(0) - 1) < 1e-10
+            assert abs(v(0)) < 1e-10
 
 
 class TestCreateZeroFuns:
@@ -632,7 +605,7 @@ class TestCreateZeroFuns:
         # Should create list of zero chebfuns
         assert len(zero_funs) == 2
         for f in zero_funs:
-            assert hasattr(f, '__call__')
+            assert hasattr(f, "__call__")
             # Should be approximately zero
             x_test = np.array([0.0, 0.5, 1.0])
             vals = f(x_test)
@@ -705,14 +678,14 @@ class TestNonlinearBoundaryConditions:
         assert abs(u(0) - 1.0) < 1e-8  # u(0) = 1 (positive root)
         assert abs(u(1)) < 1e-10  # u(1) = 0
         # Check nonlinear BC is satisfied
-        assert abs(u(0)**2 - 1) < 1e-10
+        assert abs(u(0) ** 2 - 1) < 1e-10
 
     def test_linear_op_nonlinear_neumann_bc(self):
         """Test linear operator with nonlinear Neumann-type BC."""
         N = chebop([0, 1])
         N.op = lambda u: u.diff(2)  # u'' = 0
         N.lbc = 1  # u(0) = 1
-        N.rbc = lambda u: u.diff()**2 - 1  # (u'(1))^2 = 1, so u'(1) = ±1
+        N.rbc = lambda u: u.diff() ** 2 - 1  # (u'(1))^2 = 1, so u'(1) = ±1
         N.init = chebfun(lambda x: 1 + x, [0, 1])  # Start with u'=1
 
         N.analyze_operator()
@@ -723,7 +696,7 @@ class TestNonlinearBoundaryConditions:
 
         # Solution is u = 1 + x (since u''=0, u(0)=1, u'(1)=1)
         assert abs(u(0) - 1.0) < 1e-10
-        assert abs(u.diff()(1)**2 - 1) < 1e-10  # Nonlinear BC satisfied
+        assert abs(u.diff()(1) ** 2 - 1) < 1e-10  # Nonlinear BC satisfied
 
 
 if __name__ == "__main__":

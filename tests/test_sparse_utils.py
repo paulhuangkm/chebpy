@@ -3,7 +3,7 @@
 import numpy as np
 from scipy import sparse
 
-from chebpy.sparse_utils import extract_scalar, jacobian_to_row, is_nearly_zero, prune_sparse, sparse_to_dense
+from chebpy.sparse_utils import extract_scalar, is_nearly_zero, jacobian_to_row, prune_sparse, sparse_to_dense
 
 
 class TestExtractScalar:
@@ -55,6 +55,7 @@ class TestExtractScalar:
 
     def test_adchebfun_scalar(self):
         """Extract from AdChebfunScalar wrapper."""
+
         # Create a mock object that mimics AdChebfunScalar interface
         # Must be named exactly "AdChebfunScalar" to match the type check in extract_scalar
         class AdChebfunScalar:
@@ -68,8 +69,10 @@ class TestExtractScalar:
 
     def test_unknown_type(self):
         """Extract from unknown object type returns 0.0."""
+
         class UnknownType:
             pass
+
         unknown_obj = UnknownType()
         assert extract_scalar(unknown_obj) == 0.0
 

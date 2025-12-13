@@ -1,4 +1,4 @@
-"""Comprehensive tests for LinOp functions: eigs, expm, null, svds, cond, norm.
+"""Tests for LinOp functions: eigs, expm, null, svds, cond, norm.
 
 Tests cover:
 - Standard eigenvalue problems (Laplacian, etc.)
@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 
 from chebpy import chebfun
+from chebpy.chebfun import Chebfun
 from chebpy.linop import LinOp
 from chebpy.utilities import Domain
 
@@ -30,23 +31,18 @@ class TestEigs:
         domain = Domain([0, np.pi])
 
         # L = -d^2/dx^2, so coeffs = [0, 0, -1] (constant zero, zero first deriv, -1 second deriv)
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, np.pi])
 
         # Dirichlet BCs: u(0) = 0, u(pi) = 0
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         eigenvalues, eigenfunctions = L.eigs(k=4)
 
@@ -55,34 +51,29 @@ class TestEigs:
 
         for i, (eig_computed, eig_expected) in enumerate(zip(eigenvalues, expected)):
             rel_err = abs(eig_computed - eig_expected) / eig_expected
-            assert rel_err < 1e-6, f"Eigenvalue {i+1}: expected {eig_expected}, got {eig_computed}"
+            assert rel_err < 1e-6, f"Eigenvalue {i + 1}: expected {eig_expected}, got {eig_computed}"
 
     def test_laplacian_eigenfunctions_orthogonal(self):
         """Test that eigenfunctions are orthogonal."""
         domain = Domain([0, np.pi])
 
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, np.pi])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         _, eigenfunctions = L.eigs(k=3)
 
         # Check orthogonality (L2 inner product should be ~0 for different eigenfunctions)
         for i in range(len(eigenfunctions)):
-            for j in range(i+1, len(eigenfunctions)):
+            for j in range(i + 1, len(eigenfunctions)):
                 inner = (eigenfunctions[i] * eigenfunctions[j]).sum()
                 assert abs(inner) < 1e-6, f"Eigenfunctions {i} and {j} not orthogonal: inner product = {inner}"
 
@@ -95,21 +86,16 @@ class TestEigs:
         domain = Domain([-5, 5])
 
         a0 = chebfun(lambda x: x**2, [-5, 5])  # Potential
-        a1 = chebfun(lambda x: 0*x, [-5, 5])
-        a2 = chebfun(lambda x: -1 + 0*x, [-5, 5])
+        a1 = chebfun(lambda x: 0 * x, [-5, 5])
+        a2 = chebfun(lambda x: -1 + 0 * x, [-5, 5])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         eigenvalues, _ = L.eigs(k=4)
 
@@ -121,22 +107,17 @@ class TestEigs:
         """Test eigenvalue computation with shift-invert mode."""
         domain = Domain([0, np.pi])
 
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, np.pi])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         # Use shift near 9 to get eigenvalues close to 9
         eigenvalues, _ = L.eigs(k=3, sigma=9.0)
@@ -154,9 +135,9 @@ class TestExpm:
         domain = Domain([0, np.pi])
 
         # L = d^2/dx^2 (diffusion operator)
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, np.pi])
 
         L = LinOp(
             coeffs=[a0, a1, a2],
@@ -178,7 +159,7 @@ class TestExpm:
         assert abs(u_t(np.array([np.pi]))[0]) < 1e-8
 
         # Check decay rate: amplitude should be exp(-t) of original
-        amp_ratio = abs(u_t(np.array([np.pi/2]))[0] / u0(np.array([np.pi/2]))[0])
+        amp_ratio = abs(u_t(np.array([np.pi / 2]))[0] / u0(np.array([np.pi / 2]))[0])
         expected_ratio = np.exp(-1 * t)
         assert abs(amp_ratio - expected_ratio) / expected_ratio < 1e-3
 
@@ -186,8 +167,8 @@ class TestExpm:
         """exp(0*L) should be identity."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])  # d/dx
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])  # d/dx
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -213,9 +194,9 @@ class TestNull:
         # For d^2u/dx^2 = 0 with only one BC, there should be a nullspace
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 0*x, [-1, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 0 * x, [-1, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         # Only left BC
         def lbc(u):
@@ -237,22 +218,17 @@ class TestNull:
         """Well-posed problem should have empty or near-empty nullspace."""
         domain = Domain([0, np.pi])
 
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, np.pi])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         null_basis = L.null()
         # Well-posed Dirichlet problem should have trivial nullspace
@@ -268,8 +244,8 @@ class TestSvds:
         """Test that svds returns correct types."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -288,22 +264,17 @@ class TestSvds:
         """Singular values should be positive and decreasing."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 0*x, [-1, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 0 * x, [-1, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         S, _, _ = L.svds(k=5)
 
@@ -314,8 +285,8 @@ class TestSvds:
         """Left and right singular functions should be Chebfun objects."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -325,7 +296,6 @@ class TestSvds:
 
         _, u_funcs, v_funcs = L.svds(k=2)
 
-        from chebpy.chebfun import Chebfun
         for uf in u_funcs:
             assert isinstance(uf, Chebfun)
         for vf in v_funcs:
@@ -339,8 +309,8 @@ class TestCond:
         """Condition number should be positive."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -356,22 +326,17 @@ class TestCond:
         domain = Domain([-1, 1])
 
         # Identity-like operator: u + small d^2u/dx^2
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 0*x, [-1, 1])
-        a2 = chebfun(lambda x: 0.01 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 0 * x, [-1, 1])
+        a2 = chebfun(lambda x: 0.01 + 0 * x, [-1, 1])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         kappa = L.cond()
         # Should be finite and not astronomical
@@ -382,8 +347,8 @@ class TestCond:
         """Test condition number with different norms."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -407,8 +372,8 @@ class TestNorm:
         """Operator norm should be positive for non-trivial operators."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -423,8 +388,8 @@ class TestNorm:
         """Test that spectral norm (p=2) is largest singular value."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -442,8 +407,8 @@ class TestNorm:
         """Test norms with different p values."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -472,23 +437,18 @@ class TestLinOpWithVariousBC:
         """
         domain = Domain([0, np.pi])
 
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, np.pi])
 
         # Neumann BCs: u'(0) = 0, u'(pi) = 0
         def lbc(u):
             return u.diff()
+
         def rbc(u):
             return u.diff()
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         eigenvalues, _ = L.eigs(k=4)
 
@@ -501,26 +461,20 @@ class TestLinOpWithVariousBC:
         """Test with mixed Dirichlet/Neumann boundary conditions."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         # u(0) = 0, u'(1) = 0
         def lbc(u):
             return u
+
         def rbc(u):
             return u.diff()
 
         rhs = chebfun(lambda x: np.sin(np.pi * x), [0, 1])
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc,
-            rhs=rhs
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc, rhs=rhs)
 
         # Just verify these operations work with mixed BCs
         kappa = L.cond()
@@ -538,22 +492,17 @@ class TestLinOpVariableCoefficients:
         domain = Domain([-1, 1])
 
         # L = -(1+x^2) d^2/dx^2 (variable diffusion coefficient)
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 0 * x, [-1, 1])
         a2 = chebfun(lambda x: -(1 + x**2), [-1, 1])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         eigenvalues, eigenfunctions = L.eigs(k=3)
 
@@ -588,24 +537,19 @@ class TestLinOpHigherOrder:
         domain = Domain([0, 1])
 
         # L = d^4/dx^4 + d^2/dx^2 + I (regularized beam equation)
-        a0 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
-        a3 = chebfun(lambda x: 0*x, [0, 1])
-        a4 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
+        a3 = chebfun(lambda x: 0 * x, [0, 1])
+        a4 = chebfun(lambda x: 1 + 0 * x, [0, 1])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2, a3, a4],
-            domain=domain,
-            diff_order=4,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2, a3, a4], domain=domain, diff_order=4, lbc=lbc, rbc=rbc)
 
         # Test that cond() works for 4th order
         kappa = L.cond()
@@ -615,23 +559,18 @@ class TestLinOpHigherOrder:
         """Test condition number of third-order operator."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 0*x, [-1, 1])
-        a2 = chebfun(lambda x: 0*x, [-1, 1])
-        a3 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 0 * x, [-1, 1])
+        a2 = chebfun(lambda x: 0 * x, [-1, 1])
+        a3 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2, a3],
-            domain=domain,
-            diff_order=3,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2, a3], domain=domain, diff_order=3, lbc=lbc, rbc=rbc)
 
         kappa = L.cond()
         assert kappa > 0
@@ -644,22 +583,17 @@ class TestRank:
         """Well-posed problem should have full rank."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 0*x, [-1, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 0 * x, [-1, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         r = L.rank()
         assert r > 0
@@ -668,8 +602,8 @@ class TestRank:
         """Rank should be positive for non-trivial operators."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -688,8 +622,8 @@ class TestTrace:
         """Trace should return a float."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -705,7 +639,7 @@ class TestTrace:
         domain = Domain([-1, 1])
 
         # L = I (identity in coefficient sense)
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0],
@@ -725,8 +659,8 @@ class TestDet:
         """Det should return a number."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -741,22 +675,17 @@ class TestDet:
         """Determinant should be nonzero for well-posed problems."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 1 + 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 0*x, [-1, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 0 * x, [-1, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         def lbc(u):
             return u
+
         def rbc(u):
             return u
 
-        L = LinOp(
-            coeffs=[a0, a1, a2],
-            domain=domain,
-            diff_order=2,
-            lbc=lbc,
-            rbc=rbc
-        )
+        L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2, lbc=lbc, rbc=rbc)
 
         d = L.det()
         assert abs(d) > 1e-100  # Non-zero
@@ -771,14 +700,14 @@ class TestDiscretizationHelpers:
 
         # First order
         L1 = LinOp(
-            coeffs=[chebfun(lambda x: 0*x, [-1, 1]), chebfun(lambda x: 1+0*x, [-1, 1])],
+            coeffs=[chebfun(lambda x: 0 * x, [-1, 1]), chebfun(lambda x: 1 + 0 * x, [-1, 1])],
             domain=domain,
             diff_order=1,
         )
 
         # Fourth order
         L4 = LinOp(
-            coeffs=[chebfun(lambda x: 0*x, [-1, 1])] * 4 + [chebfun(lambda x: 1+0*x, [-1, 1])],
+            coeffs=[chebfun(lambda x: 0 * x, [-1, 1])] * 4 + [chebfun(lambda x: 1 + 0 * x, [-1, 1])],
             domain=domain,
             diff_order=4,
         )
@@ -794,7 +723,7 @@ class TestDiscretizationHelpers:
         domain = Domain([-1, 1])
 
         L = LinOp(
-            coeffs=[chebfun(lambda x: 0*x, [-1, 1]), chebfun(lambda x: 1+0*x, [-1, 1])],
+            coeffs=[chebfun(lambda x: 0 * x, [-1, 1]), chebfun(lambda x: 1 + 0 * x, [-1, 1])],
             domain=domain,
             diff_order=1,
         )
@@ -807,8 +736,8 @@ class TestDiscretizationHelpers:
         """_discretize should return a dense numpy array."""
         domain = Domain([-1, 1])
 
-        a0 = chebfun(lambda x: 0*x, [-1, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [-1, 1])
+        a0 = chebfun(lambda x: 0 * x, [-1, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [-1, 1])
 
         L = LinOp(
             coeffs=[a0, a1],
@@ -818,7 +747,7 @@ class TestDiscretizationHelpers:
 
         A, disc = L._discretize()
         assert isinstance(A, np.ndarray)
-        assert 'n_per_block' in disc
+        assert "n_per_block" in disc
 
 
 class TestChebfunNorm:
@@ -853,12 +782,12 @@ class TestChebfunNorm:
 
     def test_chebfun_norm_general_p(self):
         """Test general Lp norm."""
-        f = chebfun(lambda x: 1 + 0*x, [-1, 1])  # Constant 1
+        f = chebfun(lambda x: 1 + 0 * x, [-1, 1])  # Constant 1
 
         # Lp norm of constant 1 on [-1,1] is 2^(1/p)
         for p in [3, 4, 5]:
             norm_p = f.norm(p)
-            expected = 2 ** (1/p)
+            expected = 2 ** (1 / p)
             assert abs(norm_p - expected) < 1e-8
 
 

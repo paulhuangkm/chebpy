@@ -20,14 +20,14 @@ class TestOperatorAddition:
         domain = Domain([0, 1])
 
         # L1 = d/dx
-        a0_1 = chebfun(lambda x: 0*x, [0, 1])
-        a1_1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0_1 = chebfun(lambda x: 0 * x, [0, 1])
+        a1_1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L1 = LinOp(coeffs=[a0_1, a1_1], domain=domain, diff_order=1)
 
         # L2 = d²/dx²
-        a0_2 = chebfun(lambda x: 0*x, [0, 1])
-        a1_2 = chebfun(lambda x: 0*x, [0, 1])
-        a2_2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0_2 = chebfun(lambda x: 0 * x, [0, 1])
+        a1_2 = chebfun(lambda x: 0 * x, [0, 1])
+        a2_2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L2 = LinOp(coeffs=[a0_2, a1_2, a2_2], domain=domain, diff_order=2)
 
         # L3 = L1 + L2 = d/dx + d²/dx²
@@ -50,9 +50,9 @@ class TestOperatorAddition:
         domain = Domain([0, 1])
 
         # L1 = d²/dx²
-        a0_1 = chebfun(lambda x: 0*x, [0, 1])
-        a1_1 = chebfun(lambda x: 0*x, [0, 1])
-        a2_1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0_1 = chebfun(lambda x: 0 * x, [0, 1])
+        a1_1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2_1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L1 = LinOp(coeffs=[a0_1, a1_1, a2_1], domain=domain, diff_order=2)
 
         # L2 = x * I (multiplication operator)
@@ -80,9 +80,9 @@ class TestScalarMultiplication:
         domain = Domain([0, 1])
 
         # L = d²/dx²
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
         # L2 = 3 * L = 3 * d²/dx²
@@ -100,9 +100,9 @@ class TestScalarMultiplication:
         domain = Domain([0, 1])
 
         # L = d²/dx²
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 0*x, [0, 1])
-        a2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
         # L2 = L * 2 = 2 * d²/dx²
@@ -117,8 +117,8 @@ class TestScalarMultiplication:
         domain = Domain([0, 1])
 
         # L = d/dx
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
 
         # L2 = -L
@@ -137,13 +137,13 @@ class TestOperatorSubtraction:
         domain = Domain([0, 1])
 
         # L1 = d²/dx²
-        a0_1 = chebfun(lambda x: 0*x, [0, 1])
-        a1_1 = chebfun(lambda x: 0*x, [0, 1])
-        a2_1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0_1 = chebfun(lambda x: 0 * x, [0, 1])
+        a1_1 = chebfun(lambda x: 0 * x, [0, 1])
+        a2_1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L1 = LinOp(coeffs=[a0_1, a1_1, a2_1], domain=domain, diff_order=2)
 
         # L2 = I (identity)
-        a0_2 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0_2 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L2 = LinOp(coeffs=[a0_2], domain=domain, diff_order=0)
 
         # L3 = L1 - L2 = d²/dx² - I
@@ -164,13 +164,13 @@ class TestOperatorAlgebraApplications:
         domain = Domain([0, np.pi])
 
         # Start with -d²/dx²
-        a0 = chebfun(lambda x: 0*x, [0, np.pi])
-        a1 = chebfun(lambda x: 0*x, [0, np.pi])
-        a2 = chebfun(lambda x: -1 + 0*x, [0, np.pi])
+        a0 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a1 = chebfun(lambda x: 0 * x, [0, np.pi])
+        a2 = chebfun(lambda x: -1 + 0 * x, [0, np.pi])
         L_laplace = LinOp(coeffs=[a0, a1, a2], domain=domain, diff_order=2)
 
         # Create k²I
-        a_id = chebfun(lambda x: k**2 + 0*x, [0, np.pi])
+        a_id = chebfun(lambda x: k**2 + 0 * x, [0, np.pi])
         L_id = LinOp(coeffs=[a_id], domain=domain, diff_order=0)
 
         # Helmholtz: L = -d²/dx² - k²I
@@ -196,12 +196,12 @@ class TestOperatorAlgebraEdgeCases:
         domain1 = Domain([0, 1])
         domain2 = Domain([0, 2])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L1 = LinOp(coeffs=[a0, a1], domain=domain1, diff_order=1)
 
-        a0_2 = chebfun(lambda x: 0*x, [0, 2])
-        a1_2 = chebfun(lambda x: 1 + 0*x, [0, 2])
+        a0_2 = chebfun(lambda x: 0 * x, [0, 2])
+        a1_2 = chebfun(lambda x: 1 + 0 * x, [0, 2])
         L2 = LinOp(coeffs=[a0_2, a1_2], domain=domain2, diff_order=1)
 
         with pytest.raises(ValueError, match="domain"):
@@ -211,8 +211,8 @@ class TestOperatorAlgebraEdgeCases:
         """Test that 0 * L creates zero operator."""
         domain = Domain([0, 1])
 
-        a0 = chebfun(lambda x: 0*x, [0, 1])
-        a1 = chebfun(lambda x: 1 + 0*x, [0, 1])
+        a0 = chebfun(lambda x: 0 * x, [0, 1])
+        a1 = chebfun(lambda x: 1 + 0 * x, [0, 1])
         L = LinOp(coeffs=[a0, a1], domain=domain, diff_order=1)
 
         L2 = 0 * L

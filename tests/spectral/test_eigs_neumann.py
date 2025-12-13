@@ -5,9 +5,11 @@ not just Dirichlet BCs. The old heuristic (len(r.indices) == 1) would fail these
 """
 
 import numpy as np
+from scipy import sparse
 
 from chebpy import chebfun
 from chebpy.linop import LinOp
+from chebpy.op_discretization import OpDiscretization
 from chebpy.utilities import Domain
 
 
@@ -49,13 +51,10 @@ class TestNeumannEigenvalues:
         evals_sorted = evals[idx]
 
         # Check eigenvalues (relative error for non-zero eigenvalues)
-        # Now using eigenfunction-based convergence like MATLAB Chebfun,
-        # which checks Chebyshev coefficient decay using standard_chop.
-        # This achieves good accuracy (~1e-4 to 2e-3 relative error).
         assert abs(evals_sorted[0]) < 1e-10, f"First eigenvalue should be ~0, got {evals_sorted[0]}"
         for i in range(1, 5):
             rel_err = abs(evals_sorted[i] - expected[i]) / expected[i]
-            assert rel_err < 2.5e-3, f"Eigenvalue {i}: {evals_sorted[i]} vs {expected[i]}, rel_err={rel_err}"
+            assert rel_err < 1e-10, f"Eigenvalue {i}: {evals_sorted[i]} vs {expected[i]}, rel_err={rel_err}"
 
         # Check first eigenfunction is constant
         ef0 = efuns[idx[0]]
@@ -99,7 +98,7 @@ class TestNeumannEigenvalues:
         # Check eigenvalues
         for i in range(4):
             rel_err = abs(evals_sorted[i] - expected[i]) / expected[i]
-            assert rel_err < 1e-2, f"Eigenvalue {i}: {evals_sorted[i]} vs {expected[i]}"
+            assert rel_err < 1e-10, f"Eigenvalue {i}: {evals_sorted[i]} vs {expected[i]}"
 
     def test_robin_boundary_conditions(self):
         """Test -u'' = λu with Robin BCs: u'(0) - u(0) = 0, u'(1) + u(1) = 0.
@@ -133,7 +132,7 @@ class TestNeumannEigenvalues:
 
         for ef in efuns:
             norm_val = ef.norm(2)
-            assert abs(norm_val - 1.0) < 0.1, "Eigenfunctions should be approximately L2-normalized"
+            assert abs(norm_val - 1.0) < 1e-10, "Eigenfunctions should be L2-normalized"
 
     def test_neumann_fourth_order(self):
         """Test u'''' = λu with Neumann BCs: u'(0) = u'''(0) = u'(1) = u'''(1) = 0.
@@ -200,15 +199,12 @@ class TestBCDetectionRegression:
 
         # Prepare domain and build discretization
         L.prepare_domain()
-        from chebpy.op_discretization import OpDiscretization
 
         disc = OpDiscretization.build_discretization(L, 16)
 
         # Check BC rows
         bc_rows = disc.get("bc_rows", [])
         assert len(bc_rows) > 0, "Should have BC rows"
-
-        from scipy import sparse
 
         for row in bc_rows:
             r = row.tocsr() if sparse.isspmatrix(row) else sparse.csr_matrix(row)

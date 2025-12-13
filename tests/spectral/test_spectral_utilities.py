@@ -1,4 +1,4 @@
-"""Comprehensive tests for spectral.py utility functions to achieve >95% coverage."""
+"""Tests for spectral.py utility functions."""
 
 import warnings
 
@@ -7,6 +7,7 @@ import pytest
 from scipy import sparse
 
 from chebpy import chebfun
+from chebpy.algorithms import barywts2, chebpts2
 from chebpy.spectral import (
     _barydiff_matrix,
     barycentric_matrix,
@@ -65,7 +66,7 @@ class TestDiffMatrixEdgeCases:
         """Test warning for high-order derivatives."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            D = diff_matrix(8, [-1, 1], order=7)
+            diff_matrix(8, [-1, 1], order=7)
             assert len(w) == 1
             assert "order 7" in str(w[0].message)
             assert "numerically unstable" in str(w[0].message)
@@ -74,13 +75,12 @@ class TestDiffMatrixEdgeCases:
         """Test warning for very high order."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            D = diff_matrix(10, [-1, 1], order=10)
+            diff_matrix(10, [-1, 1], order=10)
             assert len(w) == 1
             assert "order 10" in str(w[0].message)
 
     def test_first_order_code_path(self):
         """Test order=1 uses standard formula (not barycentric)."""
-        # This tests lines 168-176 (standard formula for first order)
         n = 8
         D1 = diff_matrix(n, [-1, 1], order=1)
 
@@ -95,7 +95,7 @@ class TestDiffMatrixEdgeCases:
 
     def test_second_order_uses_barycentric(self):
         """Test order=2 uses barycentric formula."""
-        # This tests the order >= 2 branch (line 162)
+        # This tests the order >= 2 branch
         n = 10
         D2 = diff_matrix(n, [-1, 1], order=2)
 
@@ -334,31 +334,31 @@ class TestIdentityMatrix:
     def test_identity_shape(self):
         """Test identity matrix has correct shape."""
         for n in [0, 1, 4, 8, 16]:
-            I = identity_matrix(n)
-            assert I.shape == (n + 1, n + 1)
+            id_mat = identity_matrix(n)
+            assert id_mat.shape == (n + 1, n + 1)
 
     def test_identity_is_sparse(self):
         """Test identity matrix is sparse."""
-        I = identity_matrix(10)
-        assert sparse.issparse(I)
-        assert I.format == "csr"
+        id_mat = identity_matrix(10)
+        assert sparse.issparse(id_mat)
+        assert id_mat.format == "csr"
 
     def test_identity_values(self):
         """Test identity matrix has ones on diagonal."""
         n = 8
-        I = identity_matrix(n)
-        I_dense = I.toarray()
+        id_mat = identity_matrix(n)
+        id_dense = id_mat.toarray()
 
         expected = np.eye(n + 1)
-        assert np.allclose(I_dense, expected)
+        assert np.allclose(id_dense, expected)
 
     def test_identity_action(self):
-        """Test identity matrix action I @ v = v."""
+        """Test identity matrix action id_mat @ v = v."""
         n = 10
-        I = identity_matrix(n)
+        id_mat = identity_matrix(n)
 
         v = np.random.randn(n + 1)
-        result = I @ v
+        result = id_mat @ v
 
         assert np.allclose(result, v)
 
@@ -424,7 +424,7 @@ class TestBarycentricMatrix:
         """Test barycentric at endpoints."""
         n = 10
         interval = Interval(-1, 1)
-        x_cheb = cheb_points_scaled(n, interval)
+        cheb_points_scaled(n, interval)
 
         # Evaluate at left endpoint
         E_left = barycentric_matrix(np.array([-1.0]), n, interval)
@@ -499,7 +499,6 @@ class TestProjectionMatrixRectangular:
         x_coeff = cheb_points_scaled(n, interval)
         x_colloc = cheb_points_scaled(m, interval)
 
-        # Most points should not match (triggers barycentric interpolation lines 459-462)
         # Test interpolation works
         f_vals_colloc = np.sin(x_colloc)
         f_vals_coeff = PS @ f_vals_colloc
@@ -540,8 +539,6 @@ class TestBaryDiffMatrix:
 
     def test_barydiff_without_angles(self):
         """Test without angle argument (t=None path)."""
-        from chebpy.algorithms import barywts2, chebpts2
-
         n = 8
         x = chebpts2(n + 1)
         w = barywts2(n + 1)
@@ -559,8 +556,6 @@ class TestBaryDiffMatrix:
 
     def test_barydiff_order_1(self):
         """Test order=1 code path."""
-        from chebpy.algorithms import barywts2, chebpts2
-
         n = 10
         x = chebpts2(n + 1)
         w = barywts2(n + 1)
@@ -581,8 +576,6 @@ class TestBaryDiffMatrix:
 
     def test_barydiff_order_2(self):
         """Test order=2 code path."""
-        from chebpy.algorithms import barywts2, chebpts2
-
         n = 12
         x = chebpts2(n + 1)
         w = barywts2(n + 1)
@@ -600,8 +593,6 @@ class TestBaryDiffMatrix:
 
     def test_barydiff_order_3_and_higher(self):
         """Test order >= 3 code path (loop)."""
-        from chebpy.algorithms import barywts2, chebpts2
-
         n = 14
         x = chebpts2(n + 1)
         w = barywts2(n + 1)
@@ -625,9 +616,7 @@ class TestBaryDiffMatrix:
 
     def test_barydiff_symmetry_even_n(self):
         """Test symmetry forcing for even N."""
-        from chebpy.algorithms import barywts2, chebpts2
-
-        # Even N to trigger symmetry code (lines 311-316)
+        # Even N to trigger symmetry code
         n = 10  # N = 11 (odd), try n=9 for N=10 (even)
         x = chebpts2(n)
         w = barywts2(n)
